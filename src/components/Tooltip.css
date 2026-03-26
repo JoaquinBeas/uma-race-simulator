@@ -1,0 +1,20 @@
+/* Tooltip styles */
+.hasTooltip {
+	position: relative;
+}
+
+.tooltip {
+	display: none;
+	position: absolute;
+	background: #333;
+	color: #fff;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	white-space: nowrap;
+	z-index: 100;
+}
+
+.hasTooltip:hover .tooltip {
+	display: block;
+}
