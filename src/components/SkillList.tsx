@@ -38,6 +38,29 @@ export const Skill: React.FC<any> = (props) => {
     const iconId = (skillMeta as any)[String(props.id)]?.iconId;
     const iconSrc = iconId ? `/icons/skill/utx_ico_skill_${iconId}.png` : null;
 
+    let lvDisplay = null;
+    if (props.lv) {
+        if (typeof props.lv === 'object' && props.lv.setVal) {
+            lvDisplay = (
+                <div className="flex items-center text-xs bg-blue-100 text-blue-800 px-1 rounded flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <span className="mr-1">Lv</span>
+                    <select 
+                        value={props.lv.val} 
+                        onChange={(e) => props.lv.setVal(parseInt(e.target.value, 10))}
+                        className="bg-transparent font-bold outline-none cursor-pointer"
+                        style={{ paddingRight: '2px' }}
+                    >
+                        {Array.from({length: props.lv.max - props.lv.min + 1}, (_, i) => props.lv.min + i).map(n => (
+                            <option key={n} value={n}>{n}</option>
+                        ))}
+                    </select>
+                </div>
+            );
+        } else {
+            lvDisplay = <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded whitespace-nowrap flex-shrink-0">Lv {props.lv}</span>;
+        }
+    }
+
     return (
         <div className="skill flex items-center gap-2 p-1 border rounded bg-white shadow-sm overflow-hidden" data-skillid={props.id}>
             <div className="w-6 h-6 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center text-xs overflow-hidden">
@@ -48,7 +71,7 @@ export const Skill: React.FC<any> = (props) => {
                 )}
             </div>
             <span className="text-sm font-bold truncate flex-1">{name}</span>
-            {props.lv && <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded whitespace-nowrap flex-shrink-0">Lv {props.lv}</span>}
+            {lvDisplay}
             {props.dismissable && (
                 <button 
                     onClick={(e) => {
@@ -69,6 +92,29 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
     const iconId = (skillMeta as any)[String(props.id)]?.iconId;
     const iconSrc = iconId ? `/icons/skill/utx_ico_skill_${iconId}.png` : null;
 
+    let lvDisplay = null;
+    if (props.lv) {
+        if (typeof props.lv === 'object' && props.lv.setVal) {
+            lvDisplay = (
+                <div className="flex items-center text-xs bg-blue-100 text-blue-800 px-1 rounded inline-flex whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                    <span className="mr-1">Lv</span>
+                    <select 
+                        value={props.lv.val} 
+                        onChange={(e) => props.lv.setVal(parseInt(e.target.value, 10))}
+                        className="bg-transparent font-bold outline-none cursor-pointer"
+                        style={{ paddingRight: '2px' }}
+                    >
+                        {Array.from({length: props.lv.max - props.lv.min + 1}, (_, i) => props.lv.min + i).map(n => (
+                            <option key={n} value={n}>{n}</option>
+                        ))}
+                    </select>
+                </div>
+            );
+        } else {
+            lvDisplay = <div className="text-xs bg-blue-100 text-blue-800 px-1 rounded inline-block whitespace-nowrap">Lv {props.lv}</div>;
+        }
+    }
+
     return (
         <div className="expandedSkill flex items-center justify-between p-2 border rounded bg-white shadow-sm w-full overflow-hidden" data-skillid={props.id}>
             <div className="expandedSkillHeader flex items-center gap-2 flex-1 min-w-0">
@@ -81,7 +127,7 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold truncate">{name}</div>
-                    {props.lv && <div className="text-xs bg-blue-100 text-blue-800 px-1 rounded inline-block whitespace-nowrap">Lv {props.lv}</div>}
+                    {lvDisplay}
                 </div>
             </div>
             {props.dismissable && (

@@ -23,14 +23,14 @@ export function SkillSet(ids: string[]): Map<string, string> {
 	}, {entries: [], ndebuff: 0}).entries);
 }
 
-function assertIsSkill(sid: string): asserts sid is string {
+function assertIsSkill(sid: string): asserts sid is string { // This assert fails if uma is not in global/skill does not appear in json 
 	console.assert((skills as any)[sid] != null);
 }
 
 export function uniqueSkillForUma(oid: string, starCount: 1 | 2 | 3 | 4 | 5): string {
 	if (oid.length == 0) return '';
 	const i = +oid.slice(1, -2), v = +oid.slice(-2);
-	const sid = (10000 * (1 + 9 * +(starCount > 2)) + 10000 * (v - 1) + i * 10 + 1).toString();
+	const sid = (10000 * (90 - 80 * +(starCount > 2)) + 10000 * (v - 1) + i * 10 + 1).toString();
 	assertIsSkill(sid);
 	return sid;
 }
