@@ -23,15 +23,20 @@ export function SkillSet(ids: string[]): Map<string, string> {
 	}, {entries: [], ndebuff: 0}).entries);
 }
 
-function assertIsSkill(sid: string): asserts sid is string { // This assert fails if uma is not in global/skill does not appear in json 
-	console.assert((skills as any)[sid] != null);
+function assertIsSkill(sid: string): boolean {
+	return (skills as any)[sid] != null;
 }
 
 export function uniqueSkillForUma(oid: string, starCount: 1 | 2 | 3 | 4 | 5): string {
-	if (oid.length == 0) return '';
+	if (!oid || oid.length < 6) return ''; 
 	const i = +oid.slice(1, -2), v = +oid.slice(-2);
-	const sid = (10000 * (90 - 80 * +(starCount > 2)) + 10000 * (v - 1) + i * 10 + 1).toString();
-	assertIsSkill(sid);
+	const sid = (10000 * (1 + 9 * +(starCount > 2)) + 10000 * (v - 1) + i * 10 + 1).toString();
+    
+	if (!assertIsSkill(sid)) {
+		const fallbackSid = (10000 * (1 + 9 * +(starCount > 2)) + i * 10 + 1).toString();
+		return assertIsSkill(fallbackSid) ? fallbackSid : '';
+	}
+	
 	return sid;
 }
 
@@ -64,11 +69,11 @@ export interface HorseState {
 export const DEFAULT_HORSE_STATE = {
 	outfitId: '',
 	starCount: 3,
-	speed:   CC_GLOBAL ? 1200 : 1850,
-	stamina: CC_GLOBAL ? 1200 : 1700,
-	power:   CC_GLOBAL ? 800 : 1700,
-	guts:    CC_GLOBAL ? 400 : 1200,
-	wisdom:  CC_GLOBAL ? 400 : 1300,
+	speed: 1200,
+	stamina: 1200,
+	power: 800,
+	guts: 400,
+	wisdom: 400,
 	strategy: 'Senkou',
 	distanceAptitude: 'S',
 	surfaceAptitude: 'A',
@@ -77,6 +82,6 @@ export const DEFAULT_HORSE_STATE = {
 	skills: SkillSet([]),
 	samplePolicies: new Map(),
 	uniqueLv: 1,
-	mood: 2,
+	mood: 0,
 	popularity: 1
 };

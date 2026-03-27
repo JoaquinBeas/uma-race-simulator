@@ -1,6 +1,6 @@
-import React, { Fragment, useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { O, State, makeState, useLens, useGetter } from '../optics';
+import { O, State, makeState, useGetter } from '../optics';
 import { SkillSet, DEFAULT_HORSE_STATE } from '../components/HorseDefTypes';
 import { HorseDef } from '../components/HorseDef';
 import { RaceTrack, TrackSelect } from '../components/RaceTrack';
@@ -9,13 +9,11 @@ import { runComparison } from '../umalator/compare';
 import umas from '../uma-skill-tools/data/umas.json';
 
 import './app.css';
-
+    
 const UI_STRINGS = Object.freeze({
     'umaheader': 'Umamusume Details',
     'skillheader': 'Skills'
 });
-
-const dfsk = [200012,200952,200362,200382,201312,201601,202712,202742,202802,202982,203122,203172,203312,203422,204162,210141];
 
 const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, courseid: number}> = ({runData, courseDistance, courseid}) => {
     const [viewMode, setViewMode] = useState<'speed' | 'hp'>('speed');
@@ -31,12 +29,10 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
         const horse2Pos = currentRun.p[1];
         const horse2Val = viewMode === 'speed' ? currentRun.v[1] : currentRun.hp[1];
 
-        // Use a fixed number of points for the chart
         const numPoints = 200;
         for (let i = 0; i <= numPoints; i++) {
             const targetPos = (courseDistance / numPoints) * i;
             
-            // Find closest point for horse 1
             let idx1 = 0;
             let minDiff1 = Infinity;
             for (let j = 0; j < horse1Pos.length; j++) {
@@ -47,7 +43,6 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                 }
             }
 
-            // Find closest point for horse 2
             let idx2 = 0;
             let minDiff2 = Infinity;
             for (let j = 0; j < horse2Pos.length; j++) {
@@ -68,8 +63,8 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
     }, [currentRun, viewMode, courseDistance]);
 
     return (
-        <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="w-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <span>📊</span> Race Simulation Analysis
                 </h3>
@@ -93,7 +88,7 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                     <select 
                         value={selectedRun}
                         onChange={(e) => setSelectedRun(e.target.value as any)}
-                        className="text-xs font-bold bg-slate-100 border-none rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500 outline-none"
+                        className="text-xs font-bold bg-slate-100 border-none rounded-lg px-3 py-1 focus:ring-2 focus:ring-green-500 outline-none cursor-pointer"
                     >
                         <option value="meanrun">Mean Run</option>
                         <option value="medianrun">Median Run</option>
@@ -103,9 +98,10 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                 </div>
             </div>
 
-            <div className="relative h-[400px] w-full bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-end" style={{ padding: '10px 30px 60px 60px' }}>
-                    <div className="w-full h-[120px] opacity-40">
+            <div className="relative h-[400px] w-full bg-white rounded-lg border border-slate-200 overflow-hidden">
+                {/* Background Race Track exactly matching the chart area */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-end" style={{ padding: '0 30px 30px 60px' }}>
+                    <div className="w-full h-[80px] opacity-40">
                         <RaceTrack courseid={courseid} width="100%" height="100%" hideHeader={true} regions={[]} />
                     </div>
                 </div>
@@ -186,8 +182,8 @@ function SimulatorApp() {
             weather: weather,
             season: season,
             time: 1,
-            orderRange: [1, 1],
-            numUmas: 9
+            orderRange: [1, 18],
+            numUmas: 18
         };
         const options = {
             usePosKeep,
@@ -216,11 +212,11 @@ function SimulatorApp() {
                     <div className="text-sm text-slate-500">v2.0</div>
                 </header>
 
+                {/* Top Row: Track & Umas */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
                     {/* Left Column: Track */}
                     <div className="lg:col-span-5 space-y-6">
-                        
                         {/* Race Track Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                             <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 font-semibold text-slate-700">
@@ -306,14 +302,17 @@ function SimulatorApp() {
 
                 </div>
 
-                {/* Full Width Bottom Row: Simulation Controls & Results */}
-                <div className="w-full space-y-6 mt-2">
+                {/* Full Width Bottom Row: Simulation Controls & Results & Graph */}
+                <div className="w-full space-y-6 mt-6">
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 font-semibold text-slate-700">
-                            Simulation Controls
+                            Simulation Dashboard
                         </div>
-                        <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="col-span-1 space-y-4">
+                        
+                        {/* Controls and Results Section */}
+                        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 border-b border-slate-100">
+                            {/* Controls */}
+                            <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-medium text-slate-500 mb-1">Samples</label>
@@ -344,7 +343,7 @@ function SimulatorApp() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2 pt-2">
+                                <div className="space-y-2 pt-2 flex flex-col sm:flex-row sm:gap-6 sm:space-y-0">
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input 
                                             type="checkbox" 
@@ -382,9 +381,10 @@ function SimulatorApp() {
                                 </button>
                             </div>
 
-                            <div className="col-span-1 lg:col-span-2">
+                            {/* Results */}
+                            <div className="lg:border-l lg:border-slate-100 lg:pl-8 flex flex-col justify-center">
                                 {simulationResult ? (
-                                    <div className="h-full flex flex-col justify-center px-4 md:px-8">
+                                    <div>
                                         <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Simulation Results</h3>
                                         <div className="space-y-5">
                                             <div>
@@ -418,8 +418,8 @@ function SimulatorApp() {
                                                 <span className="text-sm font-mono font-bold text-slate-500">{simulationResult.ties}</span>
                                             </div>
                                         </div>
-                                        <div className="mt-6 text-center">
-                                            <span className="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full">Based on {samples} samples</span>
+                                        <div className="mt-6 text-left">
+                                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">Based on {samples} samples</span>
                                         </div>
                                     </div>
                                 ) : (
@@ -429,22 +429,27 @@ function SimulatorApp() {
                                 )}
                             </div>
                         </div>
-                    </div>
+                        
+                        {/* Graph Section */}
+                        {simulationResult && (
+                            <div className="bg-slate-50 p-6">
+                                <RaceGraphVisualizer 
+                                    runData={simulationResult.runData} 
+                                    courseDistance={courseDistance} 
+                                    courseid={courseid}
+                                />
+                            </div>
+                        )}
 
-                    {simulationResult && (
-                        <RaceGraphVisualizer 
-                            runData={simulationResult.runData} 
-                            courseDistance={courseDistance} 
-                            courseid={courseid}
-                        />
-                    )}
+                    </div>
                 </div>
+
             </div>
         </div>
     );
 }
 
-function App(props: any) {
+export default function App(props: any) {
     const state = makeState(() => {
         const umaIds = Object.keys(umas);
         const randomUmaId = umaIds[Math.floor(Math.random() * umaIds.length)];
@@ -462,5 +467,3 @@ function App(props: any) {
         </State.Provider>
     );
 }
-
-export default App;
