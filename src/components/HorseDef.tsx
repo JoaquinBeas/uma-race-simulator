@@ -52,6 +52,10 @@ function Star({starCount, minStarCount, n}: any) {
 export function UmaSelector(props: any) {
 	const randomMob = useMemo(() => `/icons/mob/trained_mob_chr_icon_${8000 + Math.floor(Math.random() * 624)}_000001_01.png`, []);
 	const [value, setOutfitId] = useLens(props.outfitId);
+	const valueRef = useRef(value);
+	useEffect(() => {
+		valueRef.current = value;
+	}, [value]);
 	const [starCount, setStarCount] = useLens(props.starCount);
 	const u = value && (umas as any)[value.slice(0,4)];
 	const minStarCount = u ? u.outfits[value].rarity : 1;
@@ -61,15 +65,14 @@ export function UmaSelector(props: any) {
 	const [query, search] = useReducer((state: any, q: string) => ({
 		input: q, 
 		suggestions: searchNames(q)
-	}), u ? u.name[1] : '', (initial) => ({ input: initial, suggestions: searchNames(initial) }));
+	}), u ? `${u.outfits[value].epithet} ${u.name[1]}` : '', (initial) => ({ input: initial, suggestions: searchNames(initial) }));
 
-	// Sincronizar el texto del input cuando cambia la selección o se cierra el menú
 	useEffect(() => {
-		if (!open) {
-			const currentName = value && (umas as any)[value.slice(0,4)] ? (umas as any)[value.slice(0,4)].name[1] : '';
+		const currentName = value && (umas as any)[value.slice(0,4)] ? `${(umas as any)[value.slice(0,4)].outfits[value].epithet} ${(umas as any)[value.slice(0,4)].name[1]}` : '';
+		if (query.input !== currentName) {
 			search(currentName);
 		}
-	}, [value, open]);
+	}, [value]);
 
 	function confirm(oid: string) {
 		setOpen(false);
@@ -98,12 +101,19 @@ export function UmaSelector(props: any) {
 				<input type="text" className="umaSelectInput" value={query.input} tabIndex={props.tabindex} 
 					onInput={(e: any) => search(e.target.value)} 
 					onFocus={() => { setOpen(true); search(''); }} 
-					onBlur={() => setTimeout(() => setOpen(false), 250)} 
+					onBlur={() => {
+						setTimeout(() => {
+							setOpen(false);
+							const val = valueRef.current;
+							const currentName = val && (umas as any)[val.slice(0,4)] ? `${(umas as any)[val.slice(0,4)].outfits[val].epithet} ${(umas as any)[val.slice(0,4)].name[1]}` : '';
+							search(currentName);
+						}, 250);
+					}} 
 					ref={input} 
 				/>
 				<ul className={`umaSuggestions ${open ? 'open' : ''}`}>
 					{query.suggestions.slice(0, 50).map((oid) => (
-						<li key={oid} className="umaSuggestion" onClick={() => confirm(oid)}>
+						<li key={oid} className="umaSuggestion" onMouseDown={(e) => { e.preventDefault(); confirm(oid); }}>
 							<img src={`/icons/chara/${(icons as any)[oid][1]}.png`} loading="lazy" />
 							<span>{(umas as any)[oid.slice(0,4)].outfits[oid].epithet} {(umas as any)[oid.slice(0,4)].name[1]}</span>
 						</li>
@@ -159,7 +169,7 @@ export function HorseDef(props: any) {
 			const sd = (skilldata as any)[sid];
 			if (sd && (sd.rarity < 3 || sid[0] === '4' || (sid[0] === '9' && sid.length > 6))) newSkills.set(g, sid);
 		});
-		if (id && (umas as any)[id.slice(0,4)]) {
+		if (id && (umas as any)[id.slice(0,4)] && (umas as any)[id.slice(0,4)].outfits[id]) {
 			const u = (umas as any)[id.slice(0,4)].outfits[id];
 			const strats = ['Nige', 'Senkou', 'Sasi', 'Oikomi'];
 			const stratAptitudes = u.aptitudes.slice(4, 8);
@@ -191,14 +201,6 @@ export function HorseDef(props: any) {
 	}, (f: any, state: any) => ({...state, uniqueLv: f(state.uniqueLv)})), [props.state]);
 	const [uniqueLvData, setUniqueLv] = useLens(l_uniqueLv);
 
-	const initialized = useRef(false);
-	useEffect(() => {
-		if (!initialized.current && umaId && (!aptitudes || aptitudes.every((a: string) => a === 'S' || a === 'A'))) {
-			initialized.current = true;
-			setUmaId(umaId);
-		}
-	}, [umaId, aptitudes, setUmaId]);
-
 	const skillList = useMemo(() => {
 		const u = uniqueSkillForUma(umaId, starCount);
 		return Array.from(skills.values()).map((id: any) => (
@@ -206,7 +208,7 @@ export function HorseDef(props: any) {
 				<Skill id={id} 
 					lv={id === u ? { val: uniqueLvData[0], min: uniqueLvData[1], max: uniqueLvData[2], setVal: setUniqueLv } : undefined} 
 					dismissable={id !== u} 
-					onDismiss={() => setSkills(SkillSet(Array.from(skills.values()).filter(sid => sid !== id)))} 
+					onDismiss={() => setSkills(SkillSet(Array.from<string>(skills.values()).filter(sid => sid !== id)))} 
 					onClick={() => { const next = new Set(expanded); next.has(id) ? next.delete(id) : next.add(id); setExpanded(next); }}
 				/>
 			</li>

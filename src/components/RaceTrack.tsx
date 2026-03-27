@@ -111,7 +111,7 @@ function SectionText(props: any) {
     if (props.fields && props.fields.n) {
         text = text.replace('{{n}}', props.fields.n);
     }
-    return <text className="sectionText" x="50%" y="50%" height="40%" width="100%" fill="rgb(121,64,22)">{text}</text>;
+    return <text className="sectionText" x="50%" y="50%" height="40%" width="100%" fontSize="12px" fill="rgb(121,64,22)">{text}</text>;
 }
 
 export function RaceTrack(props: any) {
@@ -121,16 +121,26 @@ export function RaceTrack(props: any) {
 
     function doMouseMove(e: any) {
         const svg = e.currentTarget;
-        if (e.offsetX < xOffset) return;
+        const offsetX = e.nativeEvent ? e.nativeEvent.offsetX : e.offsetX;
+        const offsetY = e.nativeEvent ? e.nativeEvent.offsetY : e.offsetY;
+        
+        if (offsetX === undefined || offsetY === undefined || offsetX < xOffset) return;
+        
         const line = svg.querySelector('.mouseoverLine');
         const text = svg.querySelector('.mouseoverText');
+        if (!line || !text) return;
+
         const w = svg.getBoundingClientRect().width - xOffset;
-        const x = e.offsetX - xOffset;
-        const y = e.offsetY - yOffset;
-        line.setAttribute('x1', x);
-        line.setAttribute('x2', x);
-        text.setAttribute('x', x > w - 45 ? x - 45 : x + 5);
-        text.setAttribute('y', y);
+        const x = offsetX - xOffset;
+        const y = offsetY - yOffset;
+        
+        if (isNaN(x) || isNaN(y) || isNaN(w) || w <= 0) return;
+        
+        line.setAttribute('x1', x.toString());
+        line.setAttribute('x2', x.toString());
+        text.setAttribute('x', (x > w - 45 ? x - 45 : x + 5).toString());
+        text.setAttribute('y', y.toString());
+        
         const course = CourseHelpers.getCourse(svg.dataset.courseid);
         text.textContent = Math.round(x / w * course.distance) + 'm';
         props.mouseMove && props.mouseMove(x / w);
@@ -144,10 +154,14 @@ export function RaceTrack(props: any) {
         const svg = e.currentTarget;
         const line = svg.querySelector('.mouseoverLine');
         const text = svg.querySelector('.mouseoverText');
-        line.setAttribute('x1', -5);
-        line.setAttribute('x2', -5);
-        text.setAttribute('x', -5);
-        text.setAttribute('y', -5);
+        if (line) {
+            line.setAttribute('x1', '-5');
+            line.setAttribute('x2', '-5');
+        }
+        if (text) {
+            text.setAttribute('x', '-5');
+            text.setAttribute('y', '-5');
+        }
         props.mouseLeave && props.mouseLeave();
     }
 
@@ -164,11 +178,13 @@ export function RaceTrack(props: any) {
         const surface = course.surface == Surface.Turf ? STRINGS.racetrack.turf : STRINGS.racetrack.dirt;
         const desc = course.surface == 1 ? STRINGS.coursedesc.one : STRINGS.coursedesc.many;
         return (
-            <div className="racetrackHeader">
-                <div className="racetrackName">
+            <div className="racetrackHeader" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="racetrackName" style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
                     {(STRINGS.tracknames as any)[course.raceTrackId]}{' '}{desc.replace('{{distance}}', course.distance.toString()).replace('{{inout}}', inout).replace('{{surface}}', surface)}{' '}{(STRINGS.racetrack.orientation as any)[course.turn]}
                 </div>
-                <div className="racetrackStatThresholds" title={title + statThresholds}>{thresholdIcons}</div>
+                <div className="racetrackStatThresholds" title={title + statThresholds} style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>
+                    {thresholdIcons}
+                </div>
             </div>
         );
     }, [props.courseid, props.hideHeader]);

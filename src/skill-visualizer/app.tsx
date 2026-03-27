@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { O, State, makeState, useGetter } from '../optics';
-import { SkillSet, DEFAULT_HORSE_STATE } from '../components/HorseDefTypes';
+import { SkillSet, DEFAULT_HORSE_STATE, uniqueSkillForUma } from '../components/HorseDefTypes';
 import { HorseDef } from '../components/HorseDef';
 import { RaceTrack, TrackSelect } from '../components/RaceTrack';
 import { CourseHelpers } from '../uma-skill-tools/CourseData';
 import { runComparison } from '../umalator/compare';
 import umas from '../uma-skill-tools/data/umas.json';
+import skillmeta from '../uma-skill-tools/data/skill_meta.json';
 
 import './app.css';
     
@@ -16,18 +17,32 @@ const UI_STRINGS = Object.freeze({
 });
 
 const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, courseid: number}> = ({runData, courseDistance, courseid}) => {
-    const [viewMode, setViewMode] = useState<'speed' | 'hp'>('speed');
+    const [viewMode, setViewMode] = useState<'speed' | 'hp' | 'both'>('speed');
     const [selectedRun, setSelectedRun] = useState<'meanrun' | 'medianrun' | 'minrun' | 'maxrun'>('meanrun');
 
     const currentRun = runData[selectedRun];
     
+    const chartMargins = { top: 10, right: 30, left: 20, bottom: 30 };
+    const yAxisWidth = 60;
+    const xAxisHeight = 30;
+    const legendHeight = 36;
+
+    const leftPadding = (viewMode === 'speed' || viewMode === 'both') 
+        ? chartMargins.left + yAxisWidth 
+        : chartMargins.left;
+
+    const rightPadding = (viewMode === 'hp' || viewMode === 'both')
+        ? chartMargins.right + yAxisWidth
+        : chartMargins.right;
+
+    const topPadding = chartMargins.top + legendHeight;
+    const bottomPadding = chartMargins.bottom + xAxisHeight;
+
     const chartData = useMemo(() => {
         if (!currentRun) return [];
         const data: any[] = [];
         const horse1Pos = currentRun.p[0];
-        const horse1Val = viewMode === 'speed' ? currentRun.v[0] : currentRun.hp[0];
         const horse2Pos = currentRun.p[1];
-        const horse2Val = viewMode === 'speed' ? currentRun.v[1] : currentRun.hp[1];
 
         const numPoints = 200;
         for (let i = 0; i <= numPoints; i++) {
@@ -53,11 +68,24 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                 }
             }
 
-            data.push({
-                distance: Math.round(targetPos),
-                uma1: horse1Val[idx1],
-                uma2: horse2Val[idx2]
-            });
+            const point: any = {
+                distance: Math.round(targetPos)
+            };
+
+            if (viewMode === 'speed') {
+                point.uma1 = currentRun.v[0][idx1];
+                point.uma2 = currentRun.v[1][idx2];
+            } else if (viewMode === 'hp') {
+                point.uma1 = currentRun.hp[0][idx1];
+                point.uma2 = currentRun.hp[1][idx2];
+            } else {
+                point.uma1Speed = currentRun.v[0][idx1];
+                point.uma1Hp = currentRun.hp[0][idx1];
+                point.uma2Speed = currentRun.v[1][idx2];
+                point.uma2Hp = currentRun.hp[1][idx2];
+            }
+
+            data.push(point);
         }
         return data;
     }, [currentRun, viewMode, courseDistance]);
@@ -66,7 +94,7 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
         <div className="w-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <span>📊</span> Race Simulation Analysis
+                    Race Simulation Analysis
                 </h3>
                 
                 <div className="flex flex-wrap gap-2">
@@ -83,6 +111,12 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                         >
                             HP
                         </button>
+                        <button 
+                            onClick={() => setViewMode('both')}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'both' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            SPEED + HP
+                        </button>
                     </div>
 
                     <select 
@@ -98,54 +132,72 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                 </div>
             </div>
 
-            <div className="relative h-[400px] w-full bg-white rounded-lg border border-slate-200 overflow-hidden">
+            <div className="relative h-[500px] w-full bg-white rounded-lg border border-slate-200 overflow-hidden">
                 {/* Background Race Track exactly matching the chart area */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-end" style={{ padding: '0 30px 30px 60px' }}>
-                    <div className="w-full h-[80px] opacity-40">
+                <div className="absolute inset-0 pointer-events-none" style={{ padding: `${topPadding}px ${rightPadding}px ${bottomPadding}px ${leftPadding}px` }}>
+                    <div className="w-full h-full opacity-70">
                         <RaceTrack courseid={courseid} width="100%" height="100%" hideHeader={true} regions={[]} />
                     </div>
                 </div>
 
                 <div className="absolute inset-0 z-10">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 30 }}>
+                    <ResponsiveContainer key={`${selectedRun}-${viewMode}`} width="100%" height="100%">
+                        <LineChart data={chartData} margin={chartMargins}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                             <XAxis 
                                 type="number"
                                 dataKey="distance" 
                                 domain={[0, courseDistance]}
                                 height={30}
-                                label={{ value: 'Distance (m)', position: 'insideBottomRight', offset: -20, fontSize: 12 }} 
+                                label={{ value: 'Distance (m)', position: 'insideBottom', offset: -10, fontSize: 12 }} 
                                 tick={{fontSize: 12}}
                             />
-                            <YAxis 
-                                width={50}
-                                label={{ value: viewMode === 'speed' ? 'Speed (m/s)' : 'HP', angle: -90, position: 'insideLeft', fontSize: 12, offset: -5 }}
-                                tick={{fontSize: 12}}
-                                domain={viewMode === 'speed' ? ['auto', 'auto'] : [0, 'auto']}
-                            />
+                            {(viewMode === 'speed' || viewMode === 'both') && (
+                                <YAxis 
+                                    yAxisId="speed"
+                                    width={60}
+                                    label={{ value: 'Speed (m/s)', angle: -90, position: 'insideLeft', offset: 5, fontSize: 12 }}
+                                    tick={{fontSize: 12}}
+                                    domain={['auto', 'auto']}
+                                />
+                            )}
+                            {(viewMode === 'hp' || viewMode === 'both') && (
+                                <YAxis 
+                                    yAxisId="hp"
+                                    orientation="right"
+                                    width={60}
+                                    label={{ value: 'HP', angle: 90, position: 'insideRight', offset: 5, fontSize: 12 }}
+                                    tick={{fontSize: 12}}
+                                    domain={[0, 'auto']}
+                                />
+                            )}
                             <RechartsTooltip 
                                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                             />
                             <Legend verticalAlign="top" height={36}/>
-                            <Line 
-                                type="monotone" 
-                                dataKey="uma1" 
-                                name="Umamusume 1" 
-                                stroke="#3b82f6" 
-                                strokeWidth={2} 
-                                dot={false} 
-                                activeDot={{ r: 6 }} 
-                            />
-                            <Line 
-                                type="monotone" 
-                                dataKey="uma2" 
-                                name="Umamusume 2" 
-                                stroke="#ef4444" 
-                                strokeWidth={2} 
-                                dot={false} 
-                                activeDot={{ r: 6 }} 
-                            />
+                            
+                            {viewMode === 'speed' && (
+                                <>
+                                    <Line yAxisId="speed" type="monotone" dataKey="uma1" name="Uma 1 Speed" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                    <Line yAxisId="speed" type="monotone" dataKey="uma2" name="Uma 2 Speed" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                </>
+                            )}
+                            
+                            {viewMode === 'hp' && (
+                                <>
+                                    <Line yAxisId="hp" type="monotone" dataKey="uma1" name="Uma 1 HP" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                    <Line yAxisId="hp" type="monotone" dataKey="uma2" name="Uma 2 HP" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                </>
+                            )}
+
+                            {viewMode === 'both' && (
+                                <>
+                                    <Line yAxisId="speed" type="monotone" dataKey="uma1Speed" name="Uma 1 Speed" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                    <Line yAxisId="hp" type="monotone" dataKey="uma1Hp" name="Uma 1 HP" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={{ r: 6 }} />
+                                    <Line yAxisId="speed" type="monotone" dataKey="uma2Speed" name="Uma 2 Speed" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                    <Line yAxisId="hp" type="monotone" dataKey="uma2Hp" name="Uma 2 HP" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={{ r: 6 }} />
+                                </>
+                            )}
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -166,7 +218,6 @@ function SimulatorApp() {
     const [seed, setSeed] = useState(Math.floor(Math.random() * 0xFFFFFFFF).toString());
     const [usePosKeep, setUsePosKeep] = useState(true);
     const [useIntChecks, setUseIntChecks] = useState(false);
-    const [showHpConsumption, setShowHpConsumption] = useState(false);
 
     const uma1 = useGetter(O.uma1);
     const uma2 = useGetter(O.uma2);
@@ -200,11 +251,11 @@ function SimulatorApp() {
         } catch (e) {
             console.error(e);
         }
-    };
+    }
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-800 font-sans p-4 md:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+        <div className="min-h-screen bg-slate-100 text-slate-800 font-sans p-2 md:p-4">
+            <div className="max-w-[95rem] mx-auto space-y-6">
                 
                 {/* Header */}
                 <header className="flex items-center justify-between pb-4 border-b border-slate-300">
@@ -213,29 +264,29 @@ function SimulatorApp() {
                 </header>
 
                 {/* Top Row: Track & Umas */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                     
                     {/* Left Column: Track */}
-                    <div className="lg:col-span-5 space-y-6">
+                    <div className="xl:col-span-6 space-y-6">
                         {/* Race Track Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                             <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 font-semibold text-slate-700">
                                 Race Track
                             </div>
-                            <div className="p-4 flex flex-col items-center space-y-4">
+                            <div className="p-4 flex flex-col items-center space-y-6">
                                 <div className="w-full overflow-x-auto flex justify-center">
-                                    <RaceTrack courseid={courseid} width={400} height={120} regions={[]} />
+                                    <RaceTrack courseid={courseid} width={700} height={210} regions={[]} />
                                 </div>
                                 
-                                <div className="w-full space-y-3">
+                                <div className="w-full space-y-6">
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-500 mb-1">Course</label>
+                                        <label className="block text-xs font-medium text-slate-500 mb-2">Course</label>
                                         <TrackSelect courseid={courseid} setCourseid={setCourseid} tabindex={200} />
                                     </div>
                                     
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-3 gap-4 mb-3">
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-500 mb-1">Weather</label>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Weather</label>
                                             <select value={weather} onChange={e => setWeather(+e.target.value)} className="w-full border border-slate-300 rounded-md p-2 text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none">
                                                 <option value={1}>☀️ Sunny</option>
                                                 <option value={2}>☁️ Cloudy</option>
@@ -244,7 +295,7 @@ function SimulatorApp() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-500 mb-1">Ground</label>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Ground</label>
                                             <select value={ground} onChange={e => setGround(+e.target.value)} className="w-full border border-slate-300 rounded-md p-2 text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none">
                                                 <option value={1}>Good</option>
                                                 <option value={2}>Slightly Heavy</option>
@@ -253,7 +304,7 @@ function SimulatorApp() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-500 mb-1">Season</label>
+                                            <label className="block text-xs font-medium text-slate-500 mb-2">Season</label>
                                             <select value={season} onChange={e => setSeason(+e.target.value)} className="w-full border border-slate-300 rounded-md p-2 text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none">
                                                 <option value={1}>🌸 Spring</option>
                                                 <option value={2}>☀️ Summer</option>
@@ -268,7 +319,7 @@ function SimulatorApp() {
                     </div>
 
                     {/* Right Column: Umamusume Definitions */}
-                    <div className="lg:col-span-7">
+                    <div className="xl:col-span-6">
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
                             
                             {/* Tabs */}
@@ -296,10 +347,8 @@ function SimulatorApp() {
                                     <HorseDef key="uma2" state={O.uma2} aptitudesMode="full" courseDistance={courseDistance} showPolicyEd={false} tabstart={() => 100} />
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
 
                 {/* Full Width Bottom Row: Simulation Controls & Results & Graph */}
@@ -361,15 +410,6 @@ function SimulatorApp() {
                                             className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
                                         />
                                         <span className="text-sm text-slate-700">Wit checks for skills</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={showHpConsumption} 
-                                            onChange={e => setShowHpConsumption(e.target.checked)} 
-                                            className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
-                                        />
-                                        <span className="text-sm text-slate-700">Show HP consumption</span>
                                     </label>
                                 </div>
 
@@ -455,9 +495,31 @@ export default function App(props: any) {
         const randomUmaId = umaIds[Math.floor(Math.random() * umaIds.length)];
         const randomUmaOutfit = Object.keys((umas as any)[randomUmaId].outfits)[0];
 
+        function createInitialUmaState(outfitId: string) {
+            const state = { ...DEFAULT_HORSE_STATE, outfitId, samplePolicies: new Map(), skills: SkillSet([]) };
+            if (outfitId && (umas as any)[outfitId.slice(0, 4)]) {
+                const u = (umas as any)[outfitId.slice(0, 4)].outfits[outfitId];
+                const strats = ['Nige', 'Senkou', 'Sasi', 'Oikomi'];
+                const stratAptitudes = u.aptitudes.slice(4, 8);
+                let bestVal = 99, bestIdx = 0;
+                for (let i = 0; i < 4; i++) {
+                    if (stratAptitudes[i] < bestVal) {
+                        bestVal = stratAptitudes[i];
+                        bestIdx = i;
+                    }
+                }
+                const uid = uniqueSkillForUma(outfitId, state.starCount as any);
+                if (uid) state.skills.set((skillmeta as any)[uid].groupId, uid);
+                
+                state.strategy = strats[bestIdx] as any;
+                state.aptitudes = u.aptitudes.map((i: number) => ' GFEDCBA'[i]) as any;
+            }
+            return state;
+        }
+
         return {
-            uma1: {...DEFAULT_HORSE_STATE, outfitId: '100602', samplePolicies: new Map(), skills: SkillSet([])},
-            uma2: {...DEFAULT_HORSE_STATE, outfitId: randomUmaOutfit, samplePolicies: new Map(), skills: SkillSet([])},
+            uma1: createInitialUmaState('100602'),
+            uma2: createInitialUmaState(randomUmaOutfit),
         };
     });
 
