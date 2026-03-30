@@ -3,6 +3,7 @@ import { useState, useReducer, useMemo, useRef, useEffect } from 'react';
 import { O, id, useLens, useGetter } from '../optics';
 import { SkillList, Skill, ExpandedSkillDetails, SkillCost } from '../components/SkillList';
 import { SkillSet, uniqueSkillForUma } from './HorseDefTypes';
+import { useGrabScroll } from '../lib/useGrabScroll';
 import './HorseDef.css';
 
 import umas from '../uma-skill-tools/data/umas.json';
@@ -61,6 +62,7 @@ export function UmaSelector(props: any) {
 	const minStarCount = u ? u.outfits[value].rarity : 1;
 	const input = useRef<HTMLInputElement>(null);
 	const [open, setOpen] = useState(false);
+	const suggestionsRef = useGrabScroll();
 	
 	const [query, search] = useReducer((state: any, q: string) => ({
 		input: q, 
@@ -111,7 +113,10 @@ export function UmaSelector(props: any) {
 					}} 
 					ref={input} 
 				/>
-				<ul className={`umaSuggestions ${open ? 'open' : ''}`}>
+				<ul 
+					ref={suggestionsRef}
+					className={`umaSuggestions ${open ? 'open' : ''} grab-scroll`}
+				>
 					{query.suggestions.slice(0, 50).map((oid) => (
 						<li key={oid} className="umaSuggestion" onMouseDown={(e) => { e.preventDefault(); confirm(oid); }}>
 							<img src={`/icons/chara/${(icons as any)[oid][1]}.png`} loading="lazy" />
@@ -156,14 +161,15 @@ export function HorseDef(props: any) {
 	if (!props.state) return null;
 	const [skillPickerOpen, setSkillPickerOpen] = useState(false);
 	const [expanded, setExpanded] = useState(new Set<string>());
+	const skillListRef = useGrabScroll();
 	
 	const [skills, setSkills] = useLens(useMemo(() => props.state.skills, [props.state]));
 	const [currentStrategy, setStrategy] = useLens(props.state.strategy);
 	const [mood, setMood] = useLens(props.state.mood);
 	const [popularity, setPopularity] = useLens(props.state.popularity);
 
-	const l_umaId = useMemo(() => props.state._lens((x: any) => x.outfitId, (f: any, state: any) => {
-		const id = f(state.outfitId);
+	const l_umaId = useMemo(() => props.state._lens((x: any) => x?.outfitId, (f: any, state: any) => {
+		const id = f(state?.outfitId);
 		const newSkills = new Map();
 		state.skills.forEach((sid: string, g: string) => {
 			const sd = (skilldata as any)[sid];
@@ -264,9 +270,15 @@ export function HorseDef(props: any) {
 			</div>
 
 			<div className="horseSkillHeader">{STRINGS.skillheader}</div>
-			<div className="horseSkillListWrapper"><ul className="horseSkillList">{skillList}
-				<li><button className="skill addSkillButton" onClick={() => setSkillPickerOpen(true)}><span>+</span>{STRINGS.addskill}</button></li>
-			</ul></div>
+			<div className="horseSkillListWrapper">
+				<ul 
+					ref={skillListRef}
+					className="horseSkillList grab-scroll"
+				>
+					{skillList}
+					<li><button className="skill addSkillButton" onClick={() => setSkillPickerOpen(true)}><span>+</span>{STRINGS.addskill}</button></li>
+				</ul>
+			</div>
 			{skillPickerOpen && <div className="horseSkillPickerWrapper open"><SkillList ids={Object.keys(skilldata).filter(id => (skilldata as any)[id].rarity < 3 || id.startsWith(umaId))} selected={skills} setSelected={(s:any)=>{setSkills(s); setSkillPickerOpen(false);}} isOpen={true} onClose={()=>setSkillPickerOpen(false)} /></div>}
 		</div>
 	);

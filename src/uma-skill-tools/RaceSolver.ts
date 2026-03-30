@@ -223,6 +223,7 @@ export class RaceSolver {
 	temptationCount: number
 	pacer: RaceSolver | null
 	isPaceDown: boolean
+	forceFullSpurt: boolean
 	posKeepMinThreshold: number
 	posKeepMaxThreshold: number
 	posKeepCooldown: Timer
@@ -248,6 +249,7 @@ export class RaceSolver {
 		skills: PendingSkill[],
 		hp: HpPolicy,
 		pacer?: RaceSolver,
+		forceFullSpurt?: boolean,
 		onSkillActivate?: (s: RaceSolver, skillId: string, perspective: Perspective) => void,
 		onSkillDeactivate?: (s: RaceSolver, skillId: string, perspective: Perspective) => void
 	}) {
@@ -256,6 +258,7 @@ export class RaceSolver {
 		this.hp = params.hp;
 		this.pacer = params.pacer || null;
 		this.rng = params.rng;
+		this.forceFullSpurt = params.forceFullSpurt || false;
 		this.pendingSkills = params.skills.slice();
 		this.pendingRemoval = new Set();
 		this.usedSkills = new Set();
@@ -460,6 +463,11 @@ export class RaceSolver {
 
 	updateLastSpurtState() {
 		if (this.isLastSpurt || this.phase < 2) return;
+		if (this.forceFullSpurt) {
+			this.isLastSpurt = true;
+			this.lastSpurtTransition = CourseHelpers.phaseStart(this.course.distance, 2);
+			return;
+		}
 		if (this.lastSpurtTransition == -1) {
 			const v = this.hp.getLastSpurtPair(this, this.lastSpurtSpeed, this.baseTargetSpeed[2]);
 			this.lastSpurtTransition = v[0];

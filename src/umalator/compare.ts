@@ -66,8 +66,8 @@ export function getDeactivator(selfSet: Map<string, any>, otherSet: Map<string, 
 // CC_GLOBAL is defined in vite.config.ts and declared in global.d.ts
 const CC_GLOBAL_VAL = typeof CC_GLOBAL !== 'undefined' ? CC_GLOBAL : false;
 
-export function runComparison(nsamples: number, course: CourseData, racedef: any, uma1: HorseState, uma2: HorseState, seed: [number,number], options: any) {
-    const standard = new RaceSolverBuilder(nsamples)
+export function runComparison(nsamples: number, course: CourseData, racedef: any, umas: HorseState[], seed: [number,number], options: any) {
+    const baseBuilder = new RaceSolverBuilder(nsamples)
         .seed(...seed)
         .course(course)
         .ground(racedef.groundCondition)
@@ -75,116 +75,220 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
         .season(racedef.season)
         .time(racedef.time);
     if (racedef.orderRange != null) {
-        standard
+        baseBuilder
             .order(racedef.orderRange[0], racedef.orderRange[1])
             .numUmas(racedef.numUmas);
     }
-    const compare = standard.fork();
     
-    standard.horse(uma1 as any).pacer(uma2 as any).mood(uma1.mood).popularity(uma1.popularity);
-    compare.horse(uma2 as any).pacer(uma1 as any).mood(uma2.mood).popularity(uma2.popularity);
+    const builders = umas.map(() => baseBuilder.fork());
     
-    standard.otherRawWisdom(uma2.wisdom, uma2.mood);
-    compare.otherRawWisdom(uma1.wisdom, uma1.mood);
+    for (let i = 0; i < umas.length; i++) {
+        const uma = umas[i];
+        const pacerUma = umas[(i + 1) % umas.length];
+        builders[i].horse(uma as any).pacer(pacerUma as any).mood(uma.mood).popularity(uma.popularity);
+        builders[i].otherRawWisdom(pacerUma.wisdom, pacerUma.mood);
+    }
     
     const wisdomSeeds = new Map<string, [number,number]>();
     const wisdomRng = new Rule30CARng(...seed);
     for (let i = 0; i < 20; ++i) wisdomRng.pair();
     
-    const common = Array.from(new Set([...uma1.skills.keys()].filter(x => uma2.skills.has(x)))).sort((a,b) => +a - +b);
+    const allSkills = new Set<string>();
+    umas.forEach(uma => uma.skills.forEach(id => allSkills.add(id)));
+    const common = Array.from(allSkills).sort((a,b) => +a - +b);
     const commonIdx = (id: string) => { let i = common.indexOf((skillmeta as any)[id]?.groupId || id); return i > -1 ? i : common.length; };
     const sort = (a: string, b: string) => commonIdx(a) - commonIdx(b) || +a - +b;
-    const u1id = uniqueSkillForUma(uma1.outfitId, uma1.starCount);
-    const u2id = uniqueSkillForUma(uma2.outfitId, uma2.starCount);
-    Array.from(uma1.skills.values()).sort(sort).forEach(id => {
-        wisdomSeeds.set(id, wisdomRng.pair() as [number, number]);
-        standard.addSkill(id, Perspective.Self, instantiateSamplePolicy(uma1.samplePolicies.get(id)));
-    });
-    Array.from(uma2.skills.values()).sort(sort).forEach(id => {
-        wisdomSeeds.set(id, wisdomRng.pair() as [number, number]);
-        compare.addSkill(id, Perspective.Self, instantiateSamplePolicy(uma2.samplePolicies.get(id)));
+    
+    umas.forEach((uma, i) => {
+        Array.from(uma.skills.values()).sort(sort).forEach(id => {
+            if (!wisdomSeeds.has(id)) {
+                wisdomSeeds.set(id, wisdomRng.pair() as [number, number]);
+            }
+            builders[i].addSkill(id, Perspective.Self, instantiateSamplePolicy(uma.samplePolicies.get(id)));
+        });
+        
+        umas.forEach((otherUma, j) => {
+            if (i !== j) {
+                otherUma.skills.forEach(id => {
+                    builders[i].addSkill(id, Perspective.Other, instantiateSamplePolicy(otherUma.samplePolicies.get(id)));
+                });
+            }
+        });
     });
     
-    uma1.skills.forEach(id => compare.addSkill(id, Perspective.Other, instantiateSamplePolicy(uma1.samplePolicies.get(id))));
-    uma2.skills.forEach(id => standard.addSkill(id, Perspective.Other, instantiateSamplePolicy(uma2.samplePolicies.get(id))));
+    builders.forEach(builder => {
+        if (!CC_GLOBAL_VAL) {
+            builder.withAsiwotameru().withStaminaSyoubu();
+        }
+        if (options.usePosKeep) {
+            builder.useDefaultPacer();
+        }
+        if (options.useIntChecks) {
+            builder.withWisdomChecks(wisdomSeeds);
+        }
+        if (options.forceFullSpurt) {
+            builder.withForceFullSpurt();
+        }
+    });
+
+    const skillPosMaps = umas.map(() => new Map());
+    builders.forEach((builder, i) => {
+        builder.onSkillActivate(getActivator(skillPosMaps[i], null));
+        builder.onSkillDeactivate(getDeactivator(skillPosMaps[i], null, course));
+    });
+
+    const generators = builders.map(b => b.build());
     
-    if (!CC_GLOBAL_VAL) {
-        standard.withAsiwotameru().withStaminaSyoubu();
-        compare.withAsiwotameru().withStaminaSyoubu();
-    }
-    if (options.usePosKeep) {
-        standard.useDefaultPacer(); compare.useDefaultPacer();
-    }
-    if (options.useIntChecks) {
-        standard.withWisdomChecks(wisdomSeeds);
-        compare.withWisdomChecks(wisdomSeeds);
-    }
-    const skillPos1 = new Map(), skillPos2 = new Map();
-    standard.onSkillActivate(getActivator(skillPos1, null));
-    standard.onSkillDeactivate(getDeactivator(skillPos1, null, course));
-    compare.onSkillActivate(getActivator(skillPos2, null));
-    compare.onSkillDeactivate(getDeactivator(skillPos2, null, course));
-    let a = standard.build(), b = compare.build();
-    let ai = 1, bi = 0;
-    let sign = 1;
-    const diff: number[] = [];
     let min = Infinity, max = -Infinity, estMean = 0, estMedian = 0, bestMeanDiff = Infinity, bestMedianDiff = Infinity;
     let minrun: any, maxrun: any, meanrun: any, medianrun: any;
-    let nspurt = [0,0];
+    let nspurt = new Array(umas.length).fill(0);
+    let wins = new Array(umas.length).fill(0);
+    let tiesCount = 0;
+    
+    const aggregateStats = {
+        finalHp: umas.map(() => [] as number[]),
+        startDelays: umas.map(() => [] as number[]),
+        topSpeeds: umas.map(() => [] as number[]),
+        lengths: umas.map(() => [] as number[]),
+        skillStats: umas.map(() => new Map<string, {count: number, sumPos: number}>()),
+        overtakes: umas.map(() => 0)
+    };
+    
     const sampleCutoff = Math.max(Math.floor(nsamples * 0.8), nsamples - 200);
     let retry = false;
+    const diff: number[] = [];
+
     for (let i = 0; i < nsamples; ++i) {
-        const s1 = a.next(retry).value as RaceSolver;
-        const s2 = b.next(retry).value as RaceSolver;
-        const data = {t: [[], []] as number[][], p: [[], []] as number[][], v: [[], []] as number[][], hp: [[], []] as number[][], sk: [null,null] as any[], sdly: [0,0], dh: [0,0]};
+        const solvers = generators.map(g => g.next(retry).value as RaceSolver);
+        const data = {
+            t: umas.map(() => [] as number[]),
+            p: umas.map(() => [] as number[]),
+            v: umas.map(() => [] as number[]),
+            hp: umas.map(() => [] as number[]),
+            sk: umas.map(() => null as any),
+            sdly: umas.map(() => 0),
+            dh: umas.map(() => 0)
+        };
 
-        while (s2.pos < course.distance) {
-            s2.step(1/15);
-            data.t[ai].push(s2.accumulatetime.t);
-            data.p[ai].push(s2.pos);
-            data.v[ai].push(s2.currentSpeed + (s2.modifiers.currentSpeed.acc + s2.modifiers.currentSpeed.err));
-            data.hp[ai].push((s2.hp as GameHpPolicy).hp);
+        // Step all solvers until they finish
+        let allFinished = false;
+        while (!allFinished) {
+            allFinished = true;
+            for (let j = 0; j < solvers.length; j++) {
+                const s = solvers[j];
+                if (s.pos < course.distance) {
+                    allFinished = false;
+                    s.step(1/15);
+                    data.t[j].push(s.accumulatetime.t);
+                    data.p[j].push(s.pos);
+                    data.v[j].push(s.currentSpeed + (s.modifiers.currentSpeed.acc + s.modifiers.currentSpeed.err));
+                    data.hp[j].push((s.hp as GameHpPolicy).hp);
+                }
+            }
         }
-        data.sdly[ai] = s2.startDelay;
 
-        while (s1.accumulatetime.t < s2.accumulatetime.t) {
-            s1.step(1/15);
-            data.t[bi].push(s1.accumulatetime.t);
-            data.p[bi].push(s1.pos);
-            data.v[bi].push(s1.currentSpeed + (s1.modifiers.currentSpeed.acc + s1.modifiers.currentSpeed.err));
-            data.hp[bi].push((s1.hp as GameHpPolicy).hp);
+        for (let j = 0; j < solvers.length; j++) {
+            const s = solvers[j];
+            data.sdly[j] = s.startDelay;
+            s.cleanup();
+            
+            data.dh[j] = skillPosMaps[j].get('downhill') || 0; 
+            skillPosMaps[j].delete('downhill');
+            data.sk[j] = new Map(skillPosMaps[j]);
+            skillPosMaps[j].clear();
+
+            aggregateStats.finalHp[j].push(data.hp[j][data.hp[j].length - 1]);
+            aggregateStats.startDelays[j].push(data.sdly[j]);
+            aggregateStats.topSpeeds[j].push(Math.max(...data.v[j]));
+
+            data.sk[j].forEach((val: any, id: string) => {
+                if (id === 'downhill') return;
+                const stats = aggregateStats.skillStats[j].get(id) || {count: 0, sumPos: 0};
+                stats.count++;
+                if (Array.isArray(val) && val.length > 0) {
+                    stats.sumPos += val[0][0];
+                }
+                aggregateStats.skillStats[j].set(id, stats);
+            });
         }
-        const pos1 = s1.pos;
-        while (s1.pos < course.distance) {
-            s1.step(1/15);
-            data.t[bi].push(s1.accumulatetime.t);
-            data.p[bi].push(s1.pos);
-            data.v[bi].push(s1.currentSpeed + (s1.modifiers.currentSpeed.acc + s1.modifiers.currentSpeed.err));
-            data.hp[bi].push((s1.hp as GameHpPolicy).hp);
+
+        const openingLegEnd = course.distance / 6;
+        let lastLead = -1;
+        const minLen = Math.min(...data.p.map(p => p.length));
+        for (let k = 0; k < minLen; k++) {
+            let maxPos = -1;
+            let leader = -1;
+            for (let j = 0; j < solvers.length; j++) {
+                if (data.p[j][k] > maxPos) {
+                    maxPos = data.p[j][k];
+                    leader = j;
+                }
+            }
+            if (maxPos >= openingLegEnd && leader !== lastLead) {
+                if (lastLead !== -1) {
+                    aggregateStats.overtakes[leader]++;
+                }
+                lastLead = leader;
+            }
         }
-        data.sdly[bi] = s1.startDelay;
 
-        s2.cleanup();
-        s1.cleanup();
+        // Check if any solver failed to complete properly
+        let anyFailed = false;
+        for (let j = 0; j < solvers.length; j++) {
+            if (isNaN(data.p[j][data.p[j].length - 1])) {
+                anyFailed = true;
+                break;
+            }
+        }
 
-        data.dh[1] = skillPos2.get('downhill') || 0; skillPos2.delete('downhill');
-        data.dh[0] = skillPos1.get('downhill') || 0; skillPos1.delete('downhill');
-        data.sk[1] = new Map(skillPos2);
-        skillPos2.clear();
-        data.sk[0] = new Map(skillPos1);
-        skillPos1.clear();
-
-        if (s2.pos < pos1 || isNaN(pos1)) {
-            [b,a] = [a,b];
-            [bi,ai] = [ai,bi];
-            sign *= -1;
+        if (anyFailed) {
             --i;
             retry = true;
         } else {
             retry = false;
-            nspurt[bi] += +(s1.isLastSpurt && s1.lastSpurtTransition == -1);
-            nspurt[ai] += +(s2.isLastSpurt && s2.lastSpurtTransition == -1);
-            const basinn = sign * (s2.pos - pos1) / 2.5;
+            for (let j = 0; j < solvers.length; j++) {
+                nspurt[j] += +(solvers[j].isLastSpurt && solvers[j].lastSpurtTransition == -1);
+            }
+            
+            // Find the winner (minimum time)
+            const finishTimes = data.t.map(tArr => tArr[tArr.length - 1]);
+            const sortedTimes = [...finishTimes].sort((a, b) => a - b);
+            const minTime = sortedTimes[0];
+            const secondMinTime = sortedTimes.length > 1 ? sortedTimes[1] : minTime;
+
+            for (let j = 0; j < solvers.length; j++) {
+                let lengthVal = 0;
+                if (finishTimes[j] === minTime) {
+                    lengthVal = (secondMinTime - minTime) * 8;
+                } else {
+                    lengthVal = (minTime - finishTimes[j]) * 8;
+                }
+                aggregateStats.lengths[j].push(lengthVal);
+            }
+            
+            const tiedWinners = [];
+            for (let j = 0; j < solvers.length; j++) {
+                if (Math.abs(finishTimes[j] - minTime) <= 0.001) {
+                    tiedWinners.push(j);
+                }
+            }
+            
+            if (tiedWinners.length > 1) {
+                tiesCount++;
+                for (const winnerIdx of tiedWinners) {
+                    wins[winnerIdx]++;
+                }
+            } else if (tiedWinners.length === 1) {
+                wins[tiedWinners[0]]++;
+            }
+
+            // Calculate basinn for the first two umas for backwards compatibility of the diff array
+            let basinn = 0;
+            if (solvers.length >= 2) {
+                const timeDiff = data.t[1][data.t[1].length - 1] - data.t[0][data.t[0].length - 1];
+                basinn = (timeDiff * 20) / 2.5;
+            }
+            
             diff.push(basinn);
             if (basinn < min) {
                 min = basinn;
@@ -214,5 +318,15 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
         }
     }
     diff.sort((a,b) => a - b);
-    return {results: diff, runData: {nspurt, minrun, maxrun, meanrun, medianrun}};
+    return {
+        results: diff,
+        wins,
+        ties: tiesCount,
+        runData: {nspurt, minrun, maxrun, meanrun, medianrun},
+        aggregateStats: {
+            ...aggregateStats,
+            fullSpurtRate: nspurt.map(n => n / nsamples),
+            overtakes: aggregateStats.overtakes.map(o => o / nsamples)
+        }
+    };
 }

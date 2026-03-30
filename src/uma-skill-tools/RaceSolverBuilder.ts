@@ -381,6 +381,7 @@ export class RaceSolverBuilder {
 	_skills: {id: string, p: Perspective}[]
 	_wisdomSeeds: Map<string,[number,number]>
 	_useWisdomChecks: boolean
+	_forceFullSpurt: boolean
 	_otherRawWisdom: number
 	_otherMood: Mood
 	_hpPolicyFactory: (course: CourseData, params: PartialRaceParameters, rng: PRNG) => HpPolicy
@@ -408,6 +409,7 @@ export class RaceSolverBuilder {
 		this._skills = [];
 		this._wisdomSeeds = new Map();
 		this._useWisdomChecks = false;
+		this._forceFullSpurt = false;
 		this._otherRawWisdom = 2000;
 		this._otherMood = 2;
 		this._hpPolicyFactory = (course, params, rng) => new GameHpPolicy(course, params.groundCondition, rng);
@@ -603,6 +605,11 @@ export class RaceSolverBuilder {
 		return this;
 	}
 
+	withForceFullSpurt() {
+		this._forceFullSpurt = true;
+		return this;
+	}
+
 	otherRawWisdom(wisdom: number, mood?: Mood) {
 		this._otherRawWisdom = wisdom;
 		this._otherMood = mood != null ? mood : this._raceParams.mood;
@@ -638,6 +645,7 @@ export class RaceSolverBuilder {
 		clone._parser = this._parser;
 		clone._skills = this._skills.slice();
 		clone._useWisdomChecks = this._useWisdomChecks;
+		clone._forceFullSpurt = this._forceFullSpurt;
 		clone._wisdomSeeds = new Map(this._wisdomSeeds.entries());
 		clone._otherRawWisdom = this._otherRawWisdom;
 		clone._otherMood = this._otherMood;
@@ -701,7 +709,8 @@ export class RaceSolverBuilder {
 				course: this._course,
 				hp: NoopHpPolicy,
 				skills: this._pacerSkills,
-				rng: pacerRng
+				rng: pacerRng,
+				forceFullSpurt: this._forceFullSpurt
 			}) : null;
 
 			const redo: boolean = yield new RaceSolver({
@@ -711,6 +720,7 @@ export class RaceSolverBuilder {
 				pacer,
 				hp: this._hpPolicyFactory(this._course, this._raceParams, new Rule30CARng(solverRng.int32())),
 				rng: solverRng,
+				forceFullSpurt: this._forceFullSpurt,
 				onSkillActivate: this._onSkillActivate,
 				onSkillDeactivate: this._onSkillDeactivate
 			});

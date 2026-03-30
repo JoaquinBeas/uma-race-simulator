@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+@layer base {
+  /* Modern, minimalistic scrollbars */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* slate-300 */
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* slate-400 */
+  }
+
+  /* Hide scrollbar buttons (arrows) */
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+}
+
+.grab-scroll {
+  cursor: grab;
+  user-select: none;
+}
+
+.grab-scroll.active {
+  cursor: grabbing;
+}

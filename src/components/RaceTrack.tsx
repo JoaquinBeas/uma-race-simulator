@@ -295,29 +295,29 @@ export function RaceTrack(props: any) {
                     }
                     return <Fragment key={`section-markers-${i}`}>{nodes}</Fragment>;
                 })}
-                <svg key="phase-0" className="phase phase0" x="0" y="64%" width="16.67%" height="18%">
+                <svg key="phase-0" className="phase phase0" x="0" y="64%" width={`${phase1Start / course.distance * 100}%`} height="18%">
                     <rect x="0" y="0" height="90%" width="100%" fill="rgb(0,154,111)" />
                     <rect x="0" y="90%" height="10%" width="100%" fill="rgb(0,92,66)" />
-                    <SectionText id="phase0" w={0.1667} />
+                    <SectionText id="phase0" w={phase1Start / course.distance} />
                 </svg>
-                <svg key="phase-1" className="phase phase1" x="16.67%" y="64%" width="50%" height="18%">
+                <svg key="phase-1" className="phase phase1" x={`${phase1Start / course.distance * 100}%`} y="64%" width={`${(phase2Start - phase1Start) / course.distance * 100}%`} height="18%">
                     <rect x="0" y="0" height="90%" width="100%" fill="rgb(242,233,103)" />
                     <rect x="0" y="90%" height="10%" width="100%" fill="rgb(190,179,16)" />
-                    <SectionText id="phase1" w={0.5} />
+                    <SectionText id="phase1" w={(phase2Start - phase1Start) / course.distance} />
                 </svg>
-                <svg key="phase-2" className="phase phase2" x="66.67%" y="64%" width="16.67%" height="18%">
+                <svg key="phase-2" className="phase phase2" x={`${phase2Start / course.distance * 100}%`} y="64%" width={`${(phase3Start - phase2Start) / course.distance * 100}%`} height="18%">
                     <rect x="0" y="0" height="90%" width="100%" fill="rgb(209,134,175)" />
                     <rect x="0" y="90%" height="10%" width="100%" fill="rgb(149,56,107)" />
-                    <SectionText id="phase2" w={0.1667} />
+                    <SectionText id="phase2" w={(phase3Start - phase2Start) / course.distance} />
                 </svg>
-                <svg key="phase-3" className="phase phase3" x="83.33%" y="64%" width="16.67%" height="18%">
+                <svg key="phase-3" className="phase phase3" x={`${phase3Start / course.distance * 100}%`} y="64%" width={`${(course.distance - phase3Start) / course.distance * 100}%`} height="18%">
                     <rect x="0" y="0" height="90%" width="100%" fill="rgb(199,109,159)" />
                     <rect x="0" y="90%" height="10%" width="100%" fill="rgb(133,51,96)" />
-                    <SectionText id="phase3" w={0.1667} />
+                    <SectionText id="phase3" w={(course.distance - phase3Start) / course.distance} />
                 </svg>
-                <DistanceMarker key="phase-marker-1" d={phase1Start} x="16.67" y={78} />
-                <DistanceMarker key="phase-marker-2" d={phase2Start} x="66.67" y={78} />
-                <DistanceMarker key="phase-marker-3" d={phase3Start} x="83.33" y={78} />
+                <DistanceMarker key="phase-marker-1" d={phase1Start} x={phase1Start / course.distance * 100} y={78} />
+                <DistanceMarker key="phase-marker-2" d={phase2Start} x={phase2Start / course.distance * 100} y={78} />
+                <DistanceMarker key="phase-marker-3" d={phase3Start} x={phase3Start / course.distance * 100} y={78} />
                 <rect x="0" y="82%" height="18%" width="100%" fill="rgb(228,235,240)" />
                 {Array.from({length: 25}, (_,i) => i).map(i => <line key={`tick-${i}`} x1={`${i / 24 * 100}%`} y1="96%" x2={`${i / 24 * 100}%`} y2="100%" stroke="rgb(107,145,173)" strokeWidth={i == 0 || i == 24 ? "4" : "2"} />)}
                 {Array.from({length: 24}, (_,i) => i + 1).map(i => <text key={`hour-${i}`} x={`${(1/48 + (i-1)/24) * 100}%`} y="91%" fontSize="10px" textAnchor="middle" dominantBaseline="central" fill="rgb(107,145,173)">{i}</text>)}

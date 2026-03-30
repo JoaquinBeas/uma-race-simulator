@@ -47,6 +47,7 @@ export type SamplePolicyDesc = {policy: 'immediate'} | {policy: 'fixed', pos: nu
 export type Aptitude = 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
 export interface HorseState {
+	name?: string
 	outfitId: string
 	starCount: 1 | 2 | 3 | 4 | 5
 	speed: number
@@ -66,7 +67,8 @@ export interface HorseState {
 	popularity: number
 }
 
-export const DEFAULT_HORSE_STATE = {
+export const DEFAULT_HORSE_STATE: HorseState = {
+	name: '',
 	outfitId: '',
 	starCount: 3,
 	speed: 1200,

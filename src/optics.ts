@@ -185,14 +185,28 @@ export function makeState(getState: () => any) {
 }
 
 function reactGetter(l: any, ref: any) {
-	const [cached, forceUpdate] = useState(() => l(ref.current.state));
+	const [cached, forceUpdate] = useState(() => {
+		try {
+			return l(ref.current.state);
+		} catch (e) {
+			return undefined;
+		}
+	});
 	useEffect(() => {
-		let prev = l(ref.current.state);
+		let prev: any;
+		try {
+			prev = l(ref.current.state);
+		} catch (e) {}
 		function subscribe(newState: any) {
-			const next = l(newState);
-			if (!Object.is(prev, next)) {
-				prev = next;
-				forceUpdate(next);
+			try {
+				const next = l(newState);
+				if (!Object.is(prev, next)) {
+					prev = next;
+					forceUpdate(next);
+				}
+			} catch (e) {
+				// Ignore errors during state extraction (e.g., accessing properties of a deleted array element).
+				// The component is likely about to be unmounted.
 			}
 		}
 		const listeners = ref.current.listeners;

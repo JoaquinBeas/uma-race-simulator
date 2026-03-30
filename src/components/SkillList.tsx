@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import './SkillList.css';
 import { SkillSet } from './HorseDefTypes';
+import { useGrabScroll } from '../lib/useGrabScroll';
 import skillsData from '../uma-skill-tools/data/skill_data.json';
 import skillNames from '../uma-skill-tools/data/skillnames.json';
 import skillMeta from '../uma-skill-tools/data/skill_meta.json';
@@ -145,6 +146,7 @@ export const SkillCost: React.FC<any> = (props) => null;
 
 export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected, isOpen, onClose }) => {
     const [search, setSearch] = useState('');
+    const listRef = useGrabScroll();
 
     const filteredSkills = useMemo(() => {
         return (ids || []).filter(id => {
@@ -167,7 +169,10 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                 />
                 <button onClick={onClose} className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded font-bold">Close</button>
             </div>
-            <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-2">
+            <div 
+                ref={listRef}
+                className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 p-2 grab-scroll"
+            >
                 {filteredSkills.map(id => {
                     const name = skillNames[String(id) as keyof typeof skillNames]?.[0] || id;
                     const isSelected = selected ? Array.from(selected.values()).includes(id) : false;
