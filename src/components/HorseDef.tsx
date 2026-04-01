@@ -88,7 +88,7 @@ export function UmaSelector(props: any) {
 				<div className="relative">
 					<img
 						src={value ? `/icons/chara/${(icons as any)[value][1]}.png` : randomMob}
-						className="w-32 h-32 rounded-full border-4 border-[#444746] shadow-md cursor-pointer object-cover"
+						className="w-32 h-32 cursor-pointer object-contain"
 						onClick={() => input.current?.focus()}
 					/>
 					<img
@@ -257,6 +257,7 @@ export function HorseDef(props: any) {
 					dismissable={id !== u}
 					onDismiss={() => setSkills(SkillSet(Array.from<string>(skills.values()).filter(sid => sid !== id)))}
 					onClick={() => { const next = new Set(expanded); next.has(id) ? next.delete(id) : next.add(id); setExpanded(next); }}
+					isExpanded={expanded.has(id)}
 				/>
 			</li>
 		));
@@ -398,12 +399,12 @@ export function HorseDef(props: any) {
 				<div className="bg-[#131314] rounded-xl p-3 border border-[#444746] flex-1 overflow-y-auto min-h-[200px]">
 					<ul
 						ref={skillListRef}
-						className="grid grid-cols-1 sm:grid-cols-2 gap-3 grab-scroll"
+						className="grid grid-cols-1 sm:grid-cols-2 gap-3 grab-scroll items-start"
 					>
 						{skillList}
-						<li className="h-full">
+						<li className="h-[68px]">
 							<button
-								className="w-full h-full min-h-[60px] flex items-center justify-center gap-2 bg-[#1e1f20] border-2 border-dashed border-[#444746] rounded-xl text-[#e3e3e3] font-bold hover:bg-[#282a2c] transition-all group hover:border-[var(--accent-color)] hover:text-[var(--accent-color)]"
+								className="w-full h-full flex items-center justify-center gap-2 bg-[#1e1f20] border-2 border-dashed border-[#444746] rounded-xl text-[#e3e3e3] font-bold hover:bg-[#282a2c] transition-all group hover:border-[var(--accent-color)] hover:text-[var(--accent-color)]"
 								onClick={() => setSkillPickerOpen(true)}
 							>
 								<span className="text-2xl group-hover:scale-125 transition-transform">+</span>

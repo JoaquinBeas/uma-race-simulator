@@ -35,10 +35,26 @@ interface SkillListProps {
 export const skillGroups = new Map<number, string[]>();
 export const costForId = (id: string, hints: Map<string, number>, owned: Map<string, string>) => 0;
 
+const EFFECT_TYPE_MAP: Record<number, string> = {
+    27: 'Speed',
+    31: 'Accel',
+    9: 'Heal',
+    21: 'Speed Down',
+    28: 'Guts',
+    10: 'Wisdom',
+    8: 'Lane',
+    1: 'Speed (Passive)',
+    2: 'Stamina (Passive)',
+    3: 'Power (Passive)',
+    4: 'Guts (Passive)',
+    5: 'Wisdom (Passive)',
+};
+
 export const Skill: React.FC<any> = (props) => {
     const name = skillNames[String(props.id) as keyof typeof skillNames]?.[0] || props.id;
     const iconId = (skillMeta as any)[String(props.id)]?.iconId;
     const iconSrc = iconId ? `/icons/skill/utx_ico_skill_${iconId}.png` : null;
+    const skillData = (skillsData as any)[String(props.id)];
 
     let lvDisplay = null;
     if (props.lv) {
@@ -64,29 +80,70 @@ export const Skill: React.FC<any> = (props) => {
     }
 
     return (
-        <div className="group flex items-center gap-3 p-2 border border-[#444746] rounded-xl bg-[#131314] shadow-sm hover:border-[#8ab4f8] transition-all duration-200 overflow-hidden cursor-pointer" data-skillid={props.id} onClick={props.onClick}>
-            <div className="w-10 h-10 bg-[#1e1f20] rounded-lg flex-shrink-0 flex items-center justify-center text-xs overflow-hidden border border-[#444746] group-hover:scale-105 transition-transform">
-                {iconSrc ? (
-                    <img src={iconSrc} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
-                ) : (
-                    "🐎"
-                )}
+        <div 
+            className={`group flex flex-col p-2 border rounded-xl bg-[#131314] shadow-sm transition-all duration-200 overflow-hidden cursor-pointer ${props.isExpanded ? 'border-[#8ab4f8] ring-1 ring-[#8ab4f8]' : 'border-[#444746] hover:border-[#c4c7c5]'}`} 
+            data-skillid={props.id} 
+            onClick={props.onClick}
+        >
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#1e1f20] rounded-lg flex-shrink-0 flex items-center justify-center text-xs overflow-hidden border border-[#444746] group-hover:scale-105 transition-transform">
+                    {iconSrc ? (
+                        <img src={iconSrc} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                    ) : (
+                        "🐎"
+                    )}
+                </div>
+                <span className={`text-sm font-bold truncate flex-1 transition-colors ${props.isExpanded ? 'text-[#8ab4f8]' : 'text-[#e3e3e3]'}`}>{name}</span>
+                <div className="flex items-center gap-2">
+                    {lvDisplay}
+                    {props.dismissable && (
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                props.onDismiss?.();
+                            }}
+                            className="w-6 h-6 flex items-center justify-center text-[#c4c7c5] hover:text-[#f28b82] hover:bg-[#282a2c] rounded-full transition-colors"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
             </div>
-            <span className="text-sm font-bold text-[#e3e3e3] truncate flex-1">{name}</span>
-            <div className="flex items-center gap-2">
-                {lvDisplay}
-                {props.dismissable && (
-                    <button 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            props.onDismiss?.();
-                        }}
-                        className="w-6 h-6 flex items-center justify-center text-[#c4c7c5] hover:text-[#f28b82] hover:bg-[#282a2c] rounded-full transition-colors"
-                    >
-                        ✕
-                    </button>
-                )}
-            </div>
+            
+            {/* Expanded Skill Data Section */}
+            {props.isExpanded && skillData && skillData.alternatives && (
+                <div 
+                    className="mt-3 pt-3 border-t border-[#444746] flex flex-col gap-3 text-xs text-[#c4c7c5] cursor-text"
+                    onClick={e => e.stopPropagation()} /* Prevents collapse when trying to highlight/copy text */
+                >
+                    {skillData.alternatives.map((alt: any, idx: number) => (
+                        <div key={idx} className="flex flex-col gap-1.5 bg-[#1e1f20] p-2 rounded-lg border border-[#444746]">
+                            {alt.precondition && (
+                                <div className="break-words leading-relaxed">
+                                    <span className="text-[#8ab4f8] font-bold mr-1">Pre:</span> 
+                                    {alt.precondition}
+                                </div>
+                            )}
+                            {alt.condition && (
+                                <div className="break-words leading-relaxed">
+                                    <span className="text-[#8ab4f8] font-bold mr-1">Cond:</span> 
+                                    {alt.condition}
+                                </div>
+                            )}
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                                <span className="bg-[#282a2c] px-2 py-0.5 rounded border border-[#444746] text-[#e3e3e3] font-mono">
+                                    Dur: {(alt.baseDuration / 10000).toFixed(2)}s
+                                </span>
+                                {alt.effects.map((e: any, i: number) => (
+                                    <span key={i} className="bg-[#282a2c] px-2 py-0.5 rounded border border-[#444746] text-[#e3e3e3] font-mono">
+                                        {EFFECT_TYPE_MAP[e.type] || `Type ${e.type}`}: {e.modifier > 1000 ? (e.modifier / 10000).toFixed(2) : e.modifier}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
@@ -189,7 +246,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
 
     return (
         <div className="flex flex-col h-full bg-[#1e1f20]">
-            {/* HEADER - Removed sticky/top-0 as it's unneeded in flex layout, added shrink-0 */}
+            {/* HEADER - shrink-0 ensures it doesn't compress */}
             <div className="flex flex-col gap-4 p-4 border-b border-[#444746] shrink-0">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2 pr-8">
