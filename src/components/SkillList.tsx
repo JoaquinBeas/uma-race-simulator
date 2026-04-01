@@ -44,35 +44,35 @@ export const Skill: React.FC<any> = (props) => {
     if (props.lv) {
         if (typeof props.lv === 'object' && props.lv.setVal) {
             lvDisplay = (
-                <div className="flex items-center text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center text-[10px] font-bold bg-[#282a2c] text-[#8ab4f8] px-2 py-0.5 rounded-full border border-[#444746] flex-shrink-0" onClick={e => e.stopPropagation()}>
                     <span className="mr-1 uppercase tracking-tighter">Lv</span>
                     <select 
                         value={props.lv.val} 
                         onChange={(e) => props.lv.setVal(parseInt(e.target.value, 10))}
-                        className="bg-transparent font-bold outline-none cursor-pointer appearance-none"
+                        className="bg-transparent font-bold outline-none cursor-pointer appearance-none text-[#8ab4f8]"
                     >
                         {Array.from({length: props.lv.max - props.lv.min + 1}, (_, i) => props.lv.min + i).map(n => (
-                            <option key={n} value={n}>{n}</option>
+                            <option key={n} value={n} className="bg-[#1e1f20]">{n}</option>
                         ))}
                     </select>
-                    <div className="ml-1 w-0 h-0 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent border-t-[3px] border-t-blue-600"></div>
+                    <div className="ml-1 w-0 h-0 border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent border-t-[3px] border-t-[#8ab4f8]"></div>
                 </div>
             );
         } else {
-            lvDisplay = <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100 whitespace-nowrap flex-shrink-0">Lv {props.lv}</span>;
+            lvDisplay = <span className="text-[10px] font-bold bg-[#282a2c] text-[#8ab4f8] px-2 py-0.5 rounded-full border border-[#444746] whitespace-nowrap flex-shrink-0">Lv {props.lv}</span>;
         }
     }
 
     return (
-        <div className="group flex items-center gap-3 p-2 border border-gray-200 rounded-xl bg-white shadow-sm hover:border-[#8bc34a] hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer" data-skillid={props.id} onClick={props.onClick}>
-            <div className="w-10 h-10 bg-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center text-xs overflow-hidden border border-gray-100 group-hover:scale-105 transition-transform">
+        <div className="group flex items-center gap-3 p-2 border border-[#444746] rounded-xl bg-[#131314] shadow-sm hover:border-[#8ab4f8] transition-all duration-200 overflow-hidden cursor-pointer" data-skillid={props.id} onClick={props.onClick}>
+            <div className="w-10 h-10 bg-[#1e1f20] rounded-lg flex-shrink-0 flex items-center justify-center text-xs overflow-hidden border border-[#444746] group-hover:scale-105 transition-transform">
                 {iconSrc ? (
                     <img src={iconSrc} alt="" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
                 ) : (
                     "🐎"
                 )}
             </div>
-            <span className="text-sm font-bold text-[#794016] truncate flex-1">{name}</span>
+            <span className="text-sm font-bold text-[#e3e3e3] truncate flex-1">{name}</span>
             <div className="flex items-center gap-2">
                 {lvDisplay}
                 {props.dismissable && (
@@ -81,7 +81,7 @@ export const Skill: React.FC<any> = (props) => {
                             e.stopPropagation();
                             props.onDismiss?.();
                         }}
-                        className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                        className="w-6 h-6 flex items-center justify-center text-[#c4c7c5] hover:text-[#f28b82] hover:bg-[#282a2c] rounded-full transition-colors"
                     >
                         ✕
                     </button>
@@ -100,7 +100,7 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
     if (props.lv) {
         if (typeof props.lv === 'object' && props.lv.setVal) {
             lvDisplay = (
-                <div className="flex items-center text-xs bg-blue-100 text-blue-800 px-1 rounded inline-flex whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center text-xs bg-[#282a2c] text-[#8ab4f8] px-1 rounded inline-flex whitespace-nowrap" onClick={e => e.stopPropagation()}>
                     <span className="mr-1">Lv</span>
                     <select 
                         value={props.lv.val} 
@@ -109,20 +109,20 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
                         style={{ paddingRight: '2px' }}
                     >
                         {Array.from({length: props.lv.max - props.lv.min + 1}, (_, i) => props.lv.min + i).map(n => (
-                            <option key={n} value={n}>{n}</option>
+                            <option key={n} value={n} className="bg-[#1e1f20]">{n}</option>
                         ))}
                     </select>
                 </div>
             );
         } else {
-            lvDisplay = <div className="text-xs bg-blue-100 text-blue-800 px-1 rounded inline-block whitespace-nowrap">Lv {props.lv}</div>;
+            lvDisplay = <div className="text-xs bg-[#282a2c] text-[#8ab4f8] px-1 rounded inline-block whitespace-nowrap">Lv {props.lv}</div>;
         }
     }
 
     return (
-        <div className="expandedSkill flex items-center justify-between p-2 border rounded bg-white shadow-sm w-full overflow-hidden" data-skillid={props.id}>
+        <div className="expandedSkill flex items-center justify-between p-2 border border-[#444746] rounded bg-[#131314] shadow-sm w-full overflow-hidden" data-skillid={props.id}>
             <div className="expandedSkillHeader flex items-center gap-2 flex-1 min-w-0">
-                <div className="w-8 h-8 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center text-xs overflow-hidden">
+                <div className="w-8 h-8 bg-[#1e1f20] rounded flex-shrink-0 flex items-center justify-center text-xs overflow-hidden">
                     {iconSrc ? (
                         <img src={iconSrc} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                     ) : (
@@ -130,14 +130,14 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
                     )}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{name}</div>
+                    <div className="text-sm font-bold truncate text-[#e3e3e3]">{name}</div>
                     {lvDisplay}
                 </div>
             </div>
             {props.dismissable && (
                 <button 
                     onClick={props.onDismiss}
-                    className="skillDismiss flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded ml-2"
+                    className="skillDismiss flex-shrink-0 text-[#f28b82] hover:text-[#e06c64] hover:bg-[#282a2c] p-1 rounded ml-2"
                 >
                     ✕
                 </button>
@@ -178,31 +178,29 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
     if (!isOpen) return null;
 
     const filterButtons = [
-        { id: 'all', label: 'All', color: 'bg-gray-100 text-gray-700' },
-        { id: 'speed', label: 'Speed', color: 'bg-orange-100 text-orange-700' },
-        { id: 'accel', label: 'Accel', color: 'bg-red-100 text-red-700' },
-        { id: 'recovery', label: 'Recovery', color: 'bg-blue-100 text-blue-700' },
-        { id: 'debuff', label: 'Debuff', color: 'bg-purple-100 text-purple-700' },
-        { id: 'others', label: 'Others', color: 'bg-slate-100 text-slate-700' },
-        { id: 'selected', label: 'Selected', color: 'bg-yellow-100 text-yellow-700' },
+        { id: 'all', label: 'All', activeClass: 'bg-[#e3e3e3] text-[#131314] border-[#e3e3e3]' },
+        { id: 'speed', label: 'Speed', activeClass: 'bg-[#fdad31]/20 text-[#fdad31] border-[#fdad31]' },
+        { id: 'accel', label: 'Accel', activeClass: 'bg-[#f28b82]/20 text-[#f28b82] border-[#f28b82]' },
+        { id: 'recovery', label: 'Recovery', activeClass: 'bg-[#81c995]/20 text-[#81c995] border-[#81c995]' },
+        { id: 'debuff', label: 'Debuff', activeClass: 'bg-[#c58af9]/20 text-[#c58af9] border-[#c58af9]' },
+        { id: 'others', label: 'Others', activeClass: 'bg-[#e3e3e3]/20 text-[#e3e3e3] border-[#e3e3e3]' },
+        { id: 'selected', label: 'Selected', activeClass: 'bg-[#8ab4f8]/20 text-[#8ab4f8] border-[#8ab4f8]' },
     ];
 
     return (
-        <div className="flex flex-col h-full max-h-[80vh]">
-            <div className="flex flex-col gap-4 mb-4 border-b pb-4 sticky top-0 bg-white z-10">
+        <div className="flex flex-col h-full bg-[#1e1f20]">
+            {/* HEADER - Removed sticky/top-0 as it's unneeded in flex layout, added shrink-0 */}
+            <div className="flex flex-col gap-4 p-4 border-b border-[#444746] shrink-0">
                 <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <Filter className="h-5 w-5 text-blue-600" />
-                        <h2 className="text-xl font-bold text-slate-800">Select Skills</h2>
+                    <div className="flex items-center gap-2 pr-8">
+                        <Filter className="h-5 w-5 text-[#8ab4f8]" />
+                        <h2 className="text-xl font-bold text-[#e3e3e3]">Select Skills</h2>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition-colors">
-                        <X className="h-6 w-6" />
-                    </button>
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
                     <div className="relative flex-1 min-w-[200px]">
-                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#c4c7c5]">
                             <Search className="h-5 w-5" />
                         </span>
                         <input 
@@ -210,7 +208,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                             placeholder="Search skills by name..." 
                             value={search} 
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            className="pl-10 pr-4 py-2 w-full bg-[#131314] text-[#e3e3e3] border border-[#444746] rounded-xl focus:ring-2 focus:ring-[#8ab4f8] focus:border-transparent outline-none transition-all placeholder-[#c4c7c5]"
                         />
                     </div>
                 </div>
@@ -220,7 +218,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                         <button
                             key={btn.id}
                             onClick={() => setFilterType(btn.id)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${filterType === btn.id ? btn.color + ' ring-2 ring-offset-1 ring-current' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${filterType === btn.id ? btn.activeClass : 'bg-[#131314] text-[#c4c7c5] border-[#444746] hover:bg-[#282a2c]'}`}
                         >
                             {btn.label}
                         </button>
@@ -228,9 +226,11 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                 </div>
             </div>
 
+            {/* SCROLLABLE LIST - flex-1 allows it to take all remaining space */}
             <div 
                 ref={listRef}
-                className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-1 grab-scroll"
+                className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 grab-scroll bg-[#131314]"
+                style={{ alignContent: 'start' }}
             >
                 {filteredSkills.length > 0 ? (
                     filteredSkills.map(id => {
@@ -243,7 +243,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                         return (
                             <div 
                                 key={id} 
-                                className={`group relative p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-all duration-200 ${isSelected ? 'bg-blue-50 border-blue-400 shadow-md ring-1 ring-blue-400' : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-sm'}`}
+                                className={`group relative p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-all duration-200 h-[68px] ${isSelected ? 'bg-[#8ab4f8]/10 border-[#8ab4f8] shadow-md ring-1 ring-[#8ab4f8]' : 'bg-[#1e1f20] border-[#444746] hover:border-[#c4c7c5] hover:bg-[#282a2c]'}`}
                                 onClick={() => {
                                     const newIds = selected ? Array.from(selected.values() as Iterable<string>) : [];
                                     if (!newIds.includes(id)) {
@@ -254,7 +254,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                                     setSelected(SkillSet(newIds));
                                 }}
                             >
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs overflow-hidden transition-transform group-hover:scale-110 ${isSelected ? 'bg-blue-100' : 'bg-slate-50'}`}>
+                                <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-xs overflow-hidden transition-transform group-hover:scale-110 ${isSelected ? 'bg-[#8ab4f8]/20' : 'bg-[#131314]'}`}>
                                     {iconSrc ? (
                                         <img src={iconSrc} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                                     ) : (
@@ -262,11 +262,11 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>{name}</div>
-                                    <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{type}</div>
+                                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-[#8ab4f8]' : 'text-[#e3e3e3]'}`}>{name}</div>
+                                    <div className="text-[10px] uppercase tracking-wider font-bold text-[#c4c7c5]">{type}</div>
                                 </div>
                                 {isSelected && (
-                                    <div className="bg-blue-500 text-white rounded-full p-1 shadow-sm">
+                                    <div className="bg-[#8ab4f8] text-[#131314] rounded-full p-1 shadow-sm shrink-0">
                                         <Check className="h-3 w-3" />
                                     </div>
                                 )}
@@ -274,20 +274,21 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                         );
                     })
                 ) : (
-                    <div className="col-span-full py-12 text-center text-slate-400">
+                    <div className="col-span-full py-12 text-center text-[#c4c7c5]">
                         <div className="text-4xl mb-2">🔍</div>
                         <p>No skills found matching your criteria</p>
                     </div>
                 )}
             </div>
             
-            <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                <div className="text-sm text-slate-500">
-                    <span className="font-bold text-blue-600">{selected ? selected.size : 0}</span> skills selected
+            {/* FOOTER - shrink-0 ensures it's always visible and pinned to bottom */}
+            <div className="p-4 border-t border-[#444746] bg-[#1e1f20] flex justify-between items-center shrink-0">
+                <div className="text-sm text-[#c4c7c5]">
+                    <span className="font-bold text-[#8ab4f8]">{selected ? selected.size : 0}</span> skills selected
                 </div>
                 <button 
                     onClick={onClose} 
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-slate-200"
+                    className="bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#131314] px-6 py-2 rounded-xl font-bold transition-colors"
                 >
                     Done
                 </button>

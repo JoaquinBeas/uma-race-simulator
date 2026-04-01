@@ -1,4 +1,4 @@
-.racetrackWrapper {
+    .racetrackWrapper {
 	margin: auto;
 	position: relative;
 	z-index: 0;
@@ -23,10 +23,16 @@
 }
 
 .trackSelect > select {
-	background: none;
-	border: 1px solid rgb(148, 150, 189);
+	background: #131314;
+	border: 1px solid #444746; /* Updated border color */
+	color: #e3e3e3; /* Added text color */
 	border-radius: 0 8px 8px 0;
 	padding: 0.7em;
+}
+
+.trackSelect > select:focus {
+	outline: 2px solid #8ab4f8; /* Add Google Blue focus ring */
+	outline-offset: -1px;
 }
 
 .trackSelect > select:first-child {
