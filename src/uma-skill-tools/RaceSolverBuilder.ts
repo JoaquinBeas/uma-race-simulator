@@ -48,10 +48,10 @@ const StrategyProficiencyModifier = Object.freeze([1.1, 1.0, 0.85, 0.75, 0.6, 0.
 namespace Asitame {
 	export const StrategyDistanceCoefficient = Object.freeze([
 		[],
-		[0, 1.0, 0.7, 0.75,  0.7,  1.0],
-		[0, 1.0, 0.8, 0.7,   0.75, 1.0],
+		[0, 1.0, 0.7, 0.75, 0.7, 1.0],
+		[0, 1.0, 0.8, 0.7, 0.75, 1.0],
 		[0, 1.0, 0.9, 0.875, 0.86, 1.0],
-		[0, 1.0, 0.9, 1.0,   0.9,  1.0]
+		[0, 1.0, 0.9, 1.0, 0.9, 1.0]
 	]);
 
 	export const BaseModifier = 0.00875;
@@ -81,13 +81,13 @@ export function parseStrategy(s: string | Strategy) {
 		return s;
 	}
 	switch (s.toUpperCase()) {
-	case 'NIGE': return Strategy.Nige;
-	case 'SENKOU': return Strategy.Senkou;
-	case 'SASI':
-	case 'SASHI': return Strategy.Sasi;
-	case 'OIKOMI': return Strategy.Oikomi;
-	case 'OONIGE': return Strategy.Oonige;
-	default: throw new Error('Invalid running strategy.');
+		case 'NIGE': return Strategy.Nige;
+		case 'SENKOU': return Strategy.Senkou;
+		case 'SASI':
+		case 'SASHI': return Strategy.Sasi;
+		case 'OIKOMI': return Strategy.Oikomi;
+		case 'OONIGE': return Strategy.Oonige;
+		default: throw new Error('Invalid running strategy.');
 	}
 }
 
@@ -96,15 +96,15 @@ export function parseAptitude(a: string | Aptitude, type: string) {
 		return a;
 	}
 	switch (a.toUpperCase()) {
-	case 'S': return Aptitude.S;
-	case 'A': return Aptitude.A;
-	case 'B': return Aptitude.B;
-	case 'C': return Aptitude.C;
-	case 'D': return Aptitude.D;
-	case 'E': return Aptitude.E;
-	case 'F': return Aptitude.F;
-	case 'G': return Aptitude.G;
-	default: throw new Error('Invalid ' + type + ' aptitude.');
+		case 'S': return Aptitude.S;
+		case 'A': return Aptitude.A;
+		case 'B': return Aptitude.B;
+		case 'C': return Aptitude.C;
+		case 'D': return Aptitude.D;
+		case 'E': return Aptitude.E;
+		case 'F': return Aptitude.F;
+		case 'G': return Aptitude.G;
+		default: throw new Error('Invalid ' + type + ' aptitude.');
 	}
 }
 
@@ -113,11 +113,11 @@ export function parseGroundCondition(g: string | GroundCondition) {
 		return g;
 	}
 	switch (g.toUpperCase()) {
-	case 'GOOD': return GroundCondition.Good;
-	case 'YIELDING': return GroundCondition.Yielding;
-	case 'SOFT': return GroundCondition.Soft;
-	case 'HEAVY': return GroundCondition.Heavy;
-	default: throw new Error('Invalid ground condition.');
+		case 'GOOD': return GroundCondition.Good;
+		case 'YIELDING': return GroundCondition.Yielding;
+		case 'SOFT': return GroundCondition.Soft;
+		case 'HEAVY': return GroundCondition.Heavy;
+		default: throw new Error('Invalid ground condition.');
 	}
 }
 
@@ -126,11 +126,11 @@ export function parseWeather(w: string | Weather) {
 		return w;
 	}
 	switch (w.toUpperCase()) {
-	case 'SUNNY': return Weather.Sunny;
-	case 'CLOUDY': return Weather.Cloudy;
-	case 'RAINY': return Weather.Rainy;
-	case 'SNOWY': return Weather.Snowy;
-	default: throw new Error('Invalid weather.');
+		case 'SUNNY': return Weather.Sunny;
+		case 'CLOUDY': return Weather.Cloudy;
+		case 'RAINY': return Weather.Rainy;
+		case 'SNOWY': return Weather.Snowy;
+		default: throw new Error('Invalid weather.');
 	}
 }
 
@@ -139,12 +139,12 @@ export function parseSeason(s: string | Season) {
 		return s;
 	}
 	switch (s.toUpperCase()) {
-	case 'SPRING': return Season.Spring;
-	case 'SUMMER': return Season.Summer;
-	case 'AUTUMN': return Season.Autumn;
-	case 'WINTER': return Season.Winter;
-	case 'SAKURA': return Season.Sakura;
-	default: throw new Error('Invalid season.');
+		case 'SPRING': return Season.Spring;
+		case 'SUMMER': return Season.Summer;
+		case 'AUTUMN': return Season.Autumn;
+		case 'WINTER': return Season.Winter;
+		case 'SAKURA': return Season.Sakura;
+		default: throw new Error('Invalid season.');
 	}
 }
 
@@ -153,12 +153,12 @@ export function parseTime(t: string | Time) {
 		return t;
 	}
 	switch (t.toUpperCase()) {
-	case 'NONE': case 'NOTIME': return Time.NoTime;
-	case 'MORNING': return Time.Morning;
-	case 'MIDDAY': return Time.Midday;
-	case 'EVENING': return Time.Evening;
-	case 'NIGHT': return Time.Night;
-	default: throw new Error('Invalid race time.');
+		case 'NONE': case 'NOTIME': return Time.NoTime;
+		case 'MORNING': return Time.Morning;
+		case 'MIDDAY': return Time.Midday;
+		case 'EVENING': return Time.Evening;
+		case 'NIGHT': return Time.Night;
+		default: throw new Error('Invalid race time.');
 	}
 }
 
@@ -167,15 +167,15 @@ export function parseGrade(g: string | Grade) {
 		return g;
 	}
 	switch (g.toUpperCase()) {
-	case 'G1': return Grade.G1;
-	case 'G2': return Grade.G2;
-	case 'G3': return Grade.G3;
-	case 'OP': return Grade.OP;
-	case 'PRE-OP': case 'PREOP': return Grade.PreOP;
-	case 'MAIDEN': return Grade.Maiden;
-	case 'DEBUT': return Grade.Debut;
-	case 'DAILY': return Grade.Daily;
-	default: throw new Error('Invalid race grade.');
+		case 'G1': return Grade.G1;
+		case 'G2': return Grade.G2;
+		case 'G3': return Grade.G3;
+		case 'OP': return Grade.OP;
+		case 'PRE-OP': case 'PREOP': return Grade.PreOP;
+		case 'MAIDEN': return Grade.Maiden;
+		case 'DEBUT': return Grade.Debut;
+		case 'DAILY': return Grade.Daily;
+		default: throw new Error('Invalid race grade.');
 	}
 }
 
@@ -258,11 +258,11 @@ function buildSkillEffects(skill, perspective: Perspective) {
 	}));
 }
 
-export function buildSkillData(horse: HorseParameters, raceParams: PartialRaceParameters, course: CourseData, wholeCourse: RegionList, parser: {parse: any, tokenize: any}, skillId: string, perspective: Perspective, ignoreNullEffects: boolean = false) {
+export function buildSkillData(horse: HorseParameters, raceParams: PartialRaceParameters, course: CourseData, wholeCourse: RegionList, parser: { parse: any, tokenize: any }, skillId: string, perspective: Perspective, ignoreNullEffects: boolean = false) {
 	if (!(skillId in skills)) {
 		throw new Error('bad skill ID ' + skillId);
 	}
-	const extra = Object.assign({skillId}, raceParams);
+	const extra = Object.assign({ skillId }, raceParams);
 	const alternatives = skills[skillId].alternatives;
 	const triggers = [];
 	for (let i = 0; i < alternatives.length; ++i) {
@@ -275,7 +275,7 @@ export function buildSkillData(horse: HorseParameters, raceParams: PartialRacePa
 			if (preRegions.length == 0) {
 				continue;
 			} else {
-				const bounds = new Region(preRegions[0].start, wholeCourse[wholeCourse.length-1].end);
+				const bounds = new Region(preRegions[0].start, wholeCourse[wholeCourse.length - 1].end);
 				full = full.rmap(r => r.intersect(bounds));
 			}
 		}
@@ -310,7 +310,7 @@ export function buildSkillData(horse: HorseParameters, raceParams: PartialRacePa
 	} else {
 		const rarity = skills[skillId].rarity;
 		const afterEnd = new RegionList();
-		afterEnd.push(new Region(9999,9999));
+		afterEnd.push(new Region(9999, 9999));
 		return [{
 			skillId: skillId,
 			perspective: perspective,
@@ -377,9 +377,9 @@ export class RaceSolverBuilder {
 	_pacer: HorseDesc | null
 	_pacerSkills: PendingSkill[]
 	_rng: Rule30CARng
-	_parser: {parse: any, tokenize: any}
-	_skills: {id: string, p: Perspective}[]
-	_wisdomSeeds: Map<string,[number,number]>
+	_parser: { parse: any, tokenize: any }
+	_skills: { id: string, p: Perspective }[]
+	_wisdomSeeds: Map<string, [number, number]>
 	_useWisdomChecks: boolean
 	_forceFullSpurt: boolean
 	_forceInnateSkillActivation: boolean
@@ -471,7 +471,7 @@ export class RaceSolverBuilder {
 	}
 
 	order(start: number, end: number) {
-		this._raceParams.orderRange = [start,end];
+		this._raceParams.orderRange = [start, end];
 		return this;
 	}
 
@@ -503,7 +503,7 @@ export class RaceSolverBuilder {
 			return this;
 		}
 
-		this._pacer = Object.assign({}, this._horse, {strategy: 'Nige'});
+		this._pacer = Object.assign({}, this._horse, { strategy: 'Nige' });
 		if (openingLegAccel) {
 			this._pacerSkills = [{
 				skillId: '201601',
@@ -511,14 +511,14 @@ export class RaceSolverBuilder {
 				rarity: SkillRarity.White,
 				trigger: new Region(0, 100),
 				extraCondition: (_) => true,
-				effects: [{type: SkillType.Accel, baseDuration: 3.0, modifier: 0.2}]
+				effects: [{ type: SkillType.Accel, baseDuration: 3.0, modifier: 0.2 }]
 			}, {
 				skillId: '200532',
 				perspective: Perspective.Self,
 				rarity: SkillRarity.White,
 				trigger: new Region(0, 100),
 				extraCondition: (_) => true,
-				effects: [{type: SkillType.Accel, baseDuration: 1.2, modifier: 0.2}]
+				effects: [{ type: SkillType.Accel, baseDuration: 1.2, modifier: 0.2 }]
 			}];
 		}
 		return this;
@@ -537,7 +537,7 @@ export class RaceSolverBuilder {
 	withAsiwotameru() {
 		const baseDisplayedPower = this._horse.power * (1 + 0.02 * this._raceParams.mood);
 		this._extraSkillHooks.push((skilldata, horse, course) => {
-			const power = skilldata.reduce((acc,sd) => {
+			const power = skilldata.reduce((acc, sd) => {
 				const powerUp = sd.effects.find(ef => ef.type == SkillType.PowerUp);
 				if (powerUp && sd.regions.length > 0 && sd.regions[0].start < 9999) {
 					return acc + powerUp.modifier;
@@ -570,7 +570,7 @@ export class RaceSolverBuilder {
 
 	withStaminaSyoubu() {
 		this._extraSkillHooks.push((skilldata, horse, course) => {
-			const stamina = skilldata.reduce((acc,sd) => {
+			const stamina = skilldata.reduce((acc, sd) => {
 				const staminaUp = sd.effects.find(ef => ef.type == SkillType.StaminaUp);
 				if (staminaUp && sd.regions.length > 0 && sd.regions[0].start < 9999) {
 					return acc + staminaUp.modifier;
@@ -601,9 +601,9 @@ export class RaceSolverBuilder {
 		return this;
 	}
 
-	withWisdomChecks(seeds: ReadonlyMap<string,[number,number]>) {
+	withWisdomChecks(seeds: ReadonlyMap<string, [number, number]>) {
 		this._useWisdomChecks = true;
-		seeds.forEach((seed,id) => this._wisdomSeeds.set(id,seed));
+		seeds.forEach((seed, id) => this._wisdomSeeds.set(id, seed));
 		return this;
 	}
 
@@ -611,7 +611,7 @@ export class RaceSolverBuilder {
 		this._forceFullSpurt = true;
 		return this;
 	}
-	
+
 	withForceInnateSkillActivation() {
 		this._forceInnateSkillActivation = true;
 		return this;
@@ -624,7 +624,7 @@ export class RaceSolverBuilder {
 	}
 
 	addSkill(skillId: string, perspective: Perspective = Perspective.Self, samplePolicy?: ActivationSamplePolicy) {
-		this._skills.push({id: skillId, p: perspective});
+		this._skills.push({ id: skillId, p: perspective });
 		if (samplePolicy != null) {
 			this._samplePolicyOverride[perspective].set(skillId, samplePolicy);
 		}
@@ -679,15 +679,24 @@ export class RaceSolverBuilder {
 
 		const otherBaseWisdom = adjustOvercap(this._otherRawWisdom) * (1 + 0.02 * this._otherMood);
 		const skillActivationChance = [0.0, Math.max(1 - 90 / horse.wisdom, 0.2), Math.max(1 - 90 / otherBaseWisdom, 0.2), 1.0];
-
+		const extraContext = {
+			mood: this._raceParams.mood,
+			weather: this._raceParams.weather,
+			season: this._raceParams.season,
+			groundCondition: this._raceParams.groundCondition,
+			grade: this._raceParams.grade,
+			popularity: this._raceParams.popularity,
+			orderRange: this._raceParams.orderRange,
+			numUmas: this._raceParams.numUmas
+		};
 		const makeSkill = buildSkillData.bind(null, horse, this._raceParams, this._course, wholeCourse, this._parser);
-		const skilldata = this._skills.flatMap(({id,p}) => makeSkill(id, p));
+		const skilldata = this._skills.flatMap(({ id, p }) => makeSkill(id, p));
 		this._extraSkillHooks.forEach(h => h(skilldata, horse, this._course));
 		const triggers = skilldata.map(sd => {
 			const sp = this._samplePolicyOverride[sd.perspective].get(sd.skillId) || sd.samplePolicy;
 			return sp.sample(sd.regions, this.nsamples, this._rng)
 		});
-		const wisdomRngs = new Map(Array.from(this._wisdomSeeds.entries()).map(([id,seed]) => [id,new Rule30CARng(...seed)]));
+		const wisdomRngs = new Map(Array.from(this._wisdomSeeds.entries()).map(([id, seed]) => [id, new Rule30CARng(...seed)]));
 
 		horse = buildAdjustedStats(horse, this._course, this._raceParams.groundCondition);
 
@@ -698,7 +707,7 @@ export class RaceSolverBuilder {
 				skills = lastskills;
 				lastskills = null;
 			} else {
-				skills = skilldata.map((sd,sdi) => ({
+				skills = skilldata.map((sd, sdi) => ({
 					skillId: sd.skillId,
 					perspective: sd.perspective,
 					rarity: sd.rarity,

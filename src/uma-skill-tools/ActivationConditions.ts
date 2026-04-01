@@ -28,12 +28,45 @@ export class CmpOperator extends Operator {
         const arg = this.argument;
         const opName = this.constructor.name.replace('Operator', '').toLowerCase();
 
-        // Spatial conditions that filter regions
+        // --- 1. EVALUACIÓN DE CONDICIONES ESTÁTICAS (GREEN SKILLS) ---
+        const staticValues: Record<string, number> = {
+            'weather': extra.weather,
+            'season': extra.season,
+            'ground_condition': extra.groundCondition,
+            'ground_type': course.surface,
+            'running_style': horse.strategy,
+            'track_id': course.raceTrackId,
+            'rotation': course.turn,
+            'is_basis_distance': (course.distance % 400 === 0) ? 1 : 0,
+        };
+
+        if (name in staticValues) {
+            const val = staticValues[name];
+            let isMatch = false;
+            switch (opName) {
+                case 'eq': isMatch = val === arg; break;
+                case 'neq': isMatch = val !== arg; break;
+                case 'lt': isMatch = val < arg; break;
+                case 'lte': isMatch = val <= arg; break;
+                case 'gt': isMatch = val > arg; break;
+                case 'gte': isMatch = val >= arg; break;
+            }
+            if (!isMatch) return [new RegionList(), (state) => false];
+            return [regions, (state) => true];
+        }
+
+        // --- 2. EVALUACIÓN DE CONDICIONES ESPACIALES ---
         if (name === 'phase') {
+            const phaseStart = CourseHelpers.phaseStart(course.distance, arg as Phase);
+            const phaseEnd = CourseHelpers.phaseEnd(course.distance, arg as Phase);
+            const phaseRegion = new Region(phaseStart, phaseEnd);
+
+            // Si la condición es igualdad, filtramos por esa fase. Si es gt/lt, ajustamos.
             return [regions.rmap(r => {
-                const phase = arg as Phase;
-                const phaseRegion = new Region(CourseHelpers.phaseStart(course.distance, phase), CourseHelpers.phaseEnd(course.distance, phase));
-                return r.intersect(phaseRegion);
+                if (opName === 'eq') return r.intersect(phaseRegion);
+                if (opName === 'gt' || opName === 'gte') return r.intersect({ start: phaseStart, end: course.distance });
+                if (opName === 'lt' || opName === 'lte') return r.intersect({ start: 0, end: phaseEnd });
+                return r;
             }), (state) => true];
         }
 
@@ -49,30 +82,87 @@ export class CmpOperator extends Operator {
         if (name === 'remain_distance') {
             const pos = course.distance - arg;
             return [regions.rmap(r => {
-                if (opName === 'gt' || opName === 'gte') return r.intersect({ start: 0, end: pos });
+                // remain_distance <= 200 significa estar entre distance-200 y el final
                 if (opName === 'lt' || opName === 'lte') return r.intersect({ start: pos, end: course.distance });
+                if (opName === 'gt' || opName === 'gte') return r.intersect({ start: 0, end: pos });
                 return r;
             }), (state) => true];
         }
 
-        // Dynamic conditions that return a predicate
+        // --- 3. EVALUACIÓN DE CONDICIONES DINÁMICAS (PREDICATE) ---
         const predicate: DynamicCondition = (state: RaceState) => {
-            let val: number;
+            let val: any;
             switch (name) {
+                // --- DINÁMICAS BÁSICAS ---
                 case 'order': val = state.order; break;
                 case 'order_rate': val = (state.order / state.numUmas) * 100; break;
                 case 'hp_per': val = state.hp.hpRatioRemaining() * 100; break;
-                case 'phase': val = state.phase; break;
-                case 'activate_count_heal': val = state.activateCountHeal; break;
+                case 'accumulatetime': val = state.accumulatetime.t; break;
+                case 'temptation_count': val = state.temptationCount; break;
+                case 'is_temptation': val = state.isKakari ? 1 : 0; break;
+                case 'is_lastspurt': val = state.isLastSpurt ? 1 : 0; break;
+
+                // --- GEOMETRÍA Y POSICIÓN ---
+                case 'corner': val = (state as any).currentCornerIdx; break;
+                case 'corner_count': val = (state as any).cornerCount; break;
+                case 'furlong': val = (state as any).furlong; break;
+                case 'is_finalcorner': val = state.isFinalCorner ? 1 : 0; break;
+                case 'is_last_straight': val = (state as any).isLastStraight ? 1 : 0; break;
+                case 'straight_front_type': val = (state as any).currentStraightIdx; break; // Simplificado
+
+                // --- TIMERS (CONTINUETIME) ---
+                case 'blocked_front_continuetime': val = (state as any).blockedFrontTime; break;
+                case 'infront_near_lane_time': val = (state as any).nearLaneTimeInfront; break;
+                case 'behind_near_lane_time': val = (state as any).nearLaneTimeBehind; break;
+
+                // --- MEMORIA (CONTINUE FLAGS) ---
+                case 'order_rate_in20_continue': val = (state as any).orderRateIn20Continue ? 1 : 0; break;
+                case 'order_rate_in40_continue': val = (state as any).orderRateIn40Continue ? 1 : 0; break;
+                case 'order_rate_in50_continue': val = (state as any).orderRateIn50Continue ? 1 : 0; break;
+                case 'order_rate_in80_continue': val = (state as any).orderRateIn80Continue ? 1 : 0; break;
+                case 'order_rate_out20_continue': val = (state as any).orderRateOut20Continue ? 1 : 0; break;
+                case 'order_rate_out40_continue': val = (state as any).orderRateOut40Continue ? 1 : 0; break;
+                case 'order_rate_out50_continue': val = (state as any).orderRateOut50Continue ? 1 : 0; break;
+                case 'order_rate_out70_continue': val = (state as any).orderRateOut70Continue ? 1 : 0; break;
+
+                // --- STATS BASE ---
+                case 'base_speed': val = state.horse.speed; break;
+                case 'base_stamina': val = state.horse.stamina; break;
+                case 'base_power': val = state.horse.power; break;
+                case 'base_guts': val = state.horse.guts; break;
+                case 'base_wiz': val = state.horse.wisdom; break;
+
+                // --- COUNTERS DE ACTIVACIÓN ---
                 case 'activate_count_start': val = state.activateCount[0]; break;
                 case 'activate_count_middle': val = state.activateCount[1]; break;
-                case 'activate_count_end': val = state.activateCount[2]; break;
-                case 'activate_count_end_after': val = state.activateCount[2]; break;
-                case 'activate_count_all': val = state.activateCount[0] + state.activateCount[1] + state.activateCount[2]; break;
-                case 'is_kakari': return state.isKakari;
-                default: return true;
+                case 'activate_count_end_after': val = state.activateCount[2] + state.activateCount[3]; break;
+                case 'activate_count_heal': val = state.activateCountHeal; break;
+
+                // --- ADELANTAMIENTOS ---
+                case 'change_order_up_middle': val = (state as any).overtakesInPhase[1]; break;
+                case 'change_order_up_finalcorner_after': val = (state as any).overtakesInFinalCorner; break;
+
+                // --- IGNORADOS (SIEMPRE TRUE) ---
+                case 'fan_count':
+                case 'visiblehorse':
+                case 'is_abroad':
+                case 'is_dirtgrade':
+                case 'activate_count_all_team':
+                case 'is_exist_chara_id':
+                case 'is_exist_skill_id':
+                case 'compete_fight_count':
+                case 'near_count':
+                case 'near_infront_count':
+                case 'is_surrounded':
+                case 'is_tight_track':
+                    val = arg; // Forzamos que la comparación (val === arg) sea true
+                    break;
+
+                default:
+                    return true;
             }
 
+            // Lógica de comparación estándar (se mantiene igual)
             switch (opName) {
                 case 'eq': return val === arg;
                 case 'neq': return val !== arg;
@@ -88,12 +178,12 @@ export class CmpOperator extends Operator {
     }
 }
 
-export class EqOperator extends CmpOperator {}
-export class NeqOperator extends CmpOperator {}
-export class LtOperator extends CmpOperator {}
-export class LteOperator extends CmpOperator {}
-export class GtOperator extends CmpOperator {}
-export class GteOperator extends CmpOperator {}
+export class EqOperator extends CmpOperator { }
+export class NeqOperator extends CmpOperator { }
+export class LtOperator extends CmpOperator { }
+export class LteOperator extends CmpOperator { }
+export class GtOperator extends CmpOperator { }
+export class GteOperator extends CmpOperator { }
 
 export class LogicalOperator extends Operator {
     constructor(readonly left: Operator, readonly right: Operator) {
@@ -110,30 +200,30 @@ export class LogicalOperator extends Operator {
     }
 
     apply(regions: RegionList, course: CourseData, horse: HorseParameters, extra: any): [RegionList, DynamicCondition] {
-        const leftRes = this.left.apply(regions, course, horse, extra);
-        const rightRes = this.right.apply(regions, course, horse, extra);
-
-        if (!Array.isArray(leftRes) || !Array.isArray(rightRes)) {
-            return [regions, (state) => true];
-        }
-
-        const [leftRegions, leftCond] = leftRes;
-        const [rightRegions, rightCond] = rightRes;
+        const [leftRegions, leftCond] = this.left.apply(regions, course, horse, extra);
+        const [rightRegions, rightCond] = this.right.apply(regions, course, horse, extra);
 
         if (this instanceof AndOperator) {
-            // For AND, we intersect regions and combine conditions
-            return [leftRegions.union(rightRegions), (state) => leftCond(state) && rightCond(state)];
+            // CORRECCIÓN: Intersección para AND
+            const intersectedRegions = leftRegions.rmap(lr => {
+                return rightRegions.map(rr => lr.intersect(rr)).filter(r => r.start !== -1);
+            }).flat();
+
+            const resultList = new RegionList();
+            intersectedRegions.forEach(r => resultList.push(r));
+
+            return [resultList, (state) => leftCond(state) && rightCond(state)];
         } else {
-            // For OR, we union regions and combine conditions
+            // Unión para OR (@)
             return [leftRegions.union(rightRegions), (state) => leftCond(state) || rightCond(state)];
         }
     }
 }
 
-export class AndOperator extends LogicalOperator {}
-export class OrOperator extends LogicalOperator {}
+export class AndOperator extends LogicalOperator { }
+export class OrOperator extends LogicalOperator { }
 
-export const Conditions: {[key: string]: Condition} = new Proxy({}, {
+export const Conditions: { [key: string]: Condition } = new Proxy({}, {
     get: (target, name: string) => ({ name, samplePolicy: null })
 });
 
