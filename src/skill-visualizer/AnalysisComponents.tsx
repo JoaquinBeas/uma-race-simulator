@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import skillmeta from '../uma-skill-tools/data/skill_meta.json';
 import skilldata from '../uma-skill-tools/data/skill_data.json';
+import skillnames from '../uma-skill-tools/data/skillnames.json';
 import { useGrabScroll } from '../lib/useGrabScroll';
 
 interface AggregateStats {
@@ -169,12 +170,12 @@ export const SkillTableComponent: React.FC<{ stats: AggregateStats; samples: num
     const tabsRef = useGrabScroll();
 
     const umaSkills = stats.skillStats[activeUma];
-    const skillList = Array.from(umaSkills.entries()).map(([id, s]) => {
+    const skillList = Array.from(umaSkills.entries()).filter(([id]) => id !== 'kakari').map(([id, s]) => {
         const meta = (skillmeta as any)[id];
         const data = (skilldata as any)[id];
         return {
             id,
-            name: meta?.name || `Skill ${id}`,
+            name: (skillnames as any)[id]?.[0] || (skillmeta as any)[id]?.name || `Skill ${id}`,
             count: s.count,
             rate: (s.count / samples) * 100,
             avgPos: s.count > 0 ? s.posSum / s.count : 0,

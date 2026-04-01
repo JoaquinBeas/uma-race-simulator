@@ -85,7 +85,18 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
     for (let i = 0; i < umas.length; i++) {
         const uma = umas[i];
         const pacerUma = umas[(i + 1) % umas.length];
-        builders[i].horse(uma as any).pacer(pacerUma as any).mood(uma.mood).popularity(uma.popularity);
+        
+        const getAptitudes = (u: any) => {
+            const stratIdx = ['Nige', 'Senkou', 'Sasi', 'Oikomi'].indexOf(u.strategy === 'Oonige' ? 'Nige' : u.strategy);
+            return {
+                ...u,
+                distanceAptitude: u.aptitudes[course.distanceType - 1],
+                surfaceAptitude: u.aptitudes[course.surface + 7],
+                strategyAptitude: u.aptitudes[stratIdx !== -1 ? stratIdx + 4 : 4]
+            };
+        };
+
+        builders[i].horse(getAptitudes(uma) as any).pacer(getAptitudes(pacerUma) as any).mood(uma.mood).popularity(uma.popularity);
         builders[i].otherRawWisdom(pacerUma.wisdom, pacerUma.mood);
     }
     
@@ -129,6 +140,9 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
         if (options.forceFullSpurt) {
             builder.withForceFullSpurt();
         }
+        if (options.forceInnateSkillActivation) {
+            builder.withForceInnateSkillActivation();
+        }
     });
 
     const skillPosMaps = umas.map(() => new Map());
@@ -150,7 +164,7 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
         startDelays: umas.map(() => [] as number[]),
         topSpeeds: umas.map(() => [] as number[]),
         lengths: umas.map(() => [] as number[]),
-        skillStats: umas.map(() => new Map<string, {count: number, sumPos: number}>()),
+        skillStats: umas.map(() => new Map<string, {count: number, posSum: number}>()),
         overtakes: umas.map(() => 0)
     };
     
@@ -203,32 +217,51 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
 
             data.sk[j].forEach((val: any, id: string) => {
                 if (id === 'downhill') return;
-                const stats = aggregateStats.skillStats[j].get(id) || {count: 0, sumPos: 0};
+                const stats = aggregateStats.skillStats[j].get(id) || {count: 0, posSum: 0};
                 stats.count++;
                 if (Array.isArray(val) && val.length > 0) {
-                    stats.sumPos += val[0][0];
+                    stats.posSum += val[0][0];
                 }
                 aggregateStats.skillStats[j].set(id, stats);
             });
         }
 
         const openingLegEnd = course.distance / 6;
-        let lastLead = -1;
+        const numUmas = solvers.length;
         const minLen = Math.min(...data.p.map(p => p.length));
-        for (let k = 0; k < minLen; k++) {
-            let maxPos = -1;
-            let leader = -1;
-            for (let j = 0; j < solvers.length; j++) {
-                if (data.p[j][k] > maxPos) {
-                    maxPos = data.p[j][k];
-                    leader = j;
+        
+        // Track relative positions: isAhead[j][m] is true if j is ahead of m
+        const isAhead = Array.from({ length: numUmas }, () => new Uint8Array(numUmas));
+        for (let j = 0; j < numUmas; j++) {
+            for (let m = 0; m < numUmas; m++) {
+                if (j !== m && data.p[j][0] > data.p[m][0]) {
+                    isAhead[j][m] = 1;
                 }
             }
-            if (maxPos >= openingLegEnd && leader !== lastLead) {
-                if (lastLead !== -1) {
-                    aggregateStats.overtakes[leader]++;
+        }
+
+        for (let k = 1; k < minLen; k++) {
+            for (let j = 0; j < numUmas; j++) {
+                const posJ = data.p[j][k];
+                for (let m = j + 1; m < numUmas; m++) {
+                    const posM = data.p[m][k];
+                    const currentlyAhead = posJ > posM;
+                    
+                    if (currentlyAhead !== !!isAhead[j][m]) {
+                        // A change in relative position occurred
+                        if (posJ >= openingLegEnd || posM >= openingLegEnd) {
+                            if (currentlyAhead) {
+                                // j overtook m
+                                aggregateStats.overtakes[j]++;
+                            } else {
+                                // m overtook j
+                                aggregateStats.overtakes[m]++;
+                            }
+                        }
+                        isAhead[j][m] = currentlyAhead ? 1 : 0;
+                        isAhead[m][j] = currentlyAhead ? 0 : 1;
+                    }
                 }
-                lastLead = leader;
             }
         }
 

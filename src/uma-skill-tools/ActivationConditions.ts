@@ -59,10 +59,17 @@ export class CmpOperator extends Operator {
         const predicate: DynamicCondition = (state: RaceState) => {
             let val: number;
             switch (name) {
-                case 'order': val = state.activateCount[0]; break; // Simplified
-                case 'order_rate': val = (state.activateCount[0] / 9) * 100; break; // Simplified
+                case 'order': val = state.order; break;
+                case 'order_rate': val = (state.order / state.numUmas) * 100; break;
                 case 'hp_per': val = state.hp.hpRatioRemaining() * 100; break;
                 case 'phase': val = state.phase; break;
+                case 'activate_count_heal': val = state.activateCountHeal; break;
+                case 'activate_count_start': val = state.activateCount[0]; break;
+                case 'activate_count_middle': val = state.activateCount[1]; break;
+                case 'activate_count_end': val = state.activateCount[2]; break;
+                case 'activate_count_end_after': val = state.activateCount[2]; break;
+                case 'activate_count_all': val = state.activateCount[0] + state.activateCount[1] + state.activateCount[2]; break;
+                case 'is_kakari': return state.isKakari;
                 default: return true;
             }
 

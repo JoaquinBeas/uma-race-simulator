@@ -382,6 +382,7 @@ export class RaceSolverBuilder {
 	_wisdomSeeds: Map<string,[number,number]>
 	_useWisdomChecks: boolean
 	_forceFullSpurt: boolean
+	_forceInnateSkillActivation: boolean
 	_otherRawWisdom: number
 	_otherMood: Mood
 	_hpPolicyFactory: (course: CourseData, params: PartialRaceParameters, rng: PRNG) => HpPolicy
@@ -410,6 +411,7 @@ export class RaceSolverBuilder {
 		this._wisdomSeeds = new Map();
 		this._useWisdomChecks = false;
 		this._forceFullSpurt = false;
+		this._forceInnateSkillActivation = false;
 		this._otherRawWisdom = 2000;
 		this._otherMood = 2;
 		this._hpPolicyFactory = (course, params, rng) => new GameHpPolicy(course, params.groundCondition, rng);
@@ -609,6 +611,11 @@ export class RaceSolverBuilder {
 		this._forceFullSpurt = true;
 		return this;
 	}
+	
+	withForceInnateSkillActivation() {
+		this._forceInnateSkillActivation = true;
+		return this;
+	}
 
 	otherRawWisdom(wisdom: number, mood?: Mood) {
 		this._otherRawWisdom = wisdom;
@@ -646,6 +653,7 @@ export class RaceSolverBuilder {
 		clone._skills = this._skills.slice();
 		clone._useWisdomChecks = this._useWisdomChecks;
 		clone._forceFullSpurt = this._forceFullSpurt;
+		clone._forceInnateSkillActivation = this._forceInnateSkillActivation;
 		clone._wisdomSeeds = new Map(this._wisdomSeeds.entries());
 		clone._otherRawWisdom = this._otherRawWisdom;
 		clone._otherMood = this._otherMood;
@@ -704,13 +712,18 @@ export class RaceSolverBuilder {
 			const backupPacerRng = new Rule30CARng(pacerRng.lo, pacerRng.hi);
 			const backupSolverRng = new Rule30CARng(solverRng.lo, solverRng.hi);
 
+			const [start, end] = this._raceParams.orderRange || [1, 1];
+			const order = Math.floor(solverRng.random() * (end - start + 1)) + start;
+			const numUmas = this._raceParams.numUmas || 9;
+
 			const pacer = pacerHorse ? new RaceSolver({
 				horse: pacerHorse,
 				course: this._course,
 				hp: NoopHpPolicy,
 				skills: this._pacerSkills,
 				rng: pacerRng,
-				forceFullSpurt: this._forceFullSpurt
+				forceFullSpurt: this._forceFullSpurt,
+				forceInnateSkillActivation: this._forceInnateSkillActivation
 			}) : null;
 
 			const redo: boolean = yield new RaceSolver({
@@ -721,6 +734,9 @@ export class RaceSolverBuilder {
 				hp: this._hpPolicyFactory(this._course, this._raceParams, new Rule30CARng(solverRng.int32())),
 				rng: solverRng,
 				forceFullSpurt: this._forceFullSpurt,
+				forceInnateSkillActivation: this._forceInnateSkillActivation,
+				order,
+				numUmas,
 				onSkillActivate: this._onSkillActivate,
 				onSkillDeactivate: this._onSkillDeactivate
 			});

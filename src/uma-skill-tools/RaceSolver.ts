@@ -60,8 +60,8 @@ function baseAccel(baseAccel: number, horse: HorseParameters, phase: Phase) {
 const PhaseDeceleration = [-1.2, -0.8, -1.0];
 
 namespace PositionKeep {
-	export const BaseMinimumThreshold = Object.freeze([0, 0, 3.0, 6.5, 7.5]);
-	export const BaseMaximumThreshold = Object.freeze([0, 0, 5.0, 7.0, 8.0]);
+	export const BaseMinimumThreshold = Object.freeze([0, 0, 3.0, 6.5, 7.5, 0]);
+	export const BaseMaximumThreshold = Object.freeze([0, 0, 5.0, 7.0, 8.0, 0]);
 
 	export function courseFactor(distance: number) {
 		return 0.0008 * (distance - 1000) + 1.0;
@@ -114,6 +114,8 @@ export interface RaceState {
 	readonly startDelay: number
 	readonly gateRoll: number
 	readonly usedSkills: ReadonlySet<string>
+	readonly order: number
+	readonly numUmas: number
 }
 
 export type DynamicCondition = (state: RaceState) => boolean;
@@ -224,6 +226,9 @@ export class RaceSolver {
 	pacer: RaceSolver | null
 	isPaceDown: boolean
 	forceFullSpurt: boolean
+	forceInnateSkillActivation: boolean
+	order: number
+	numUmas: number
 	posKeepMinThreshold: number
 	posKeepMaxThreshold: number
 	posKeepCooldown: Timer
@@ -250,6 +255,9 @@ export class RaceSolver {
 		hp: HpPolicy,
 		pacer?: RaceSolver,
 		forceFullSpurt?: boolean,
+		forceInnateSkillActivation?: boolean,
+		order?: number,
+		numUmas?: number,
 		onSkillActivate?: (s: RaceSolver, skillId: string, perspective: Perspective) => void,
 		onSkillDeactivate?: (s: RaceSolver, skillId: string, perspective: Perspective) => void
 	}) {
@@ -259,6 +267,9 @@ export class RaceSolver {
 		this.pacer = params.pacer || null;
 		this.rng = params.rng;
 		this.forceFullSpurt = params.forceFullSpurt || false;
+		this.forceInnateSkillActivation = params.forceInnateSkillActivation || false;
+		this.order = params.order || 1;
+		this.numUmas = params.numUmas || 9;
 		this.pendingSkills = params.skills.slice();
 		this.pendingRemoval = new Set();
 		this.usedSkills = new Set();
@@ -584,7 +595,7 @@ export class RaceSolver {
 			if (this.pos >= s.trigger.end || this.pendingRemoval.has(s.skillId)) {
 				this.pendingSkills.splice(i,1);
 				this.pendingRemoval.delete(s.skillId);
-			} else if (this.pos >= s.trigger.start && s.extraCondition(this)) {
+			} else if (this.pos >= s.trigger.start && (s.extraCondition(this) || (this.forceInnateSkillActivation && s.rarity >= SkillRarity.Unique))) {
 				this.activateSkill(s);
 				this.pendingSkills.splice(i,1);
 				if (s.skillId != 'asitame' && s.skillId != 'staminasyoubu') ++activateCountThisFrame;

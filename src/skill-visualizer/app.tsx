@@ -36,7 +36,7 @@ const RaceTrackBackground = (props: any) => {
 };
 
 const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, courseid: number, umas: any[]}> = ({runData, courseDistance, courseid, umas}) => {
-    const [viewMode, setViewMode] = useState<'speed' | 'hp' | 'both'>('speed');
+    const [viewMode, setViewMode] = useState<'speed' | 'hp' | 'both' | 'distance'>('speed');
     const [selectedRun, setSelectedRun] = useState<'meanrun' | 'medianrun' | 'minrun' | 'maxrun'>('meanrun');
     const [selectedUma, setSelectedUma] = useState<number | 'all'>('all');
 
@@ -50,36 +50,77 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
         const numUmas = currentRun.p.length;
 
         const numPoints = 200;
-        for (let i = 0; i <= numPoints; i++) {
-            const targetPos = (courseDistance / numPoints) * i;
-            
-            const point: any = {
-                distance: Math.round(targetPos)
-            };
 
-            for (let u = 0; u < numUmas; u++) {
-                const horsePos = currentRun.p[u];
-                let idx = 0;
-                let minDiff = Infinity;
-                for (let j = 0; j < horsePos.length; j++) {
-                    const diff = Math.abs(horsePos[j] - targetPos);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        idx = j;
+        if (viewMode === 'distance') {
+            // Time-based chart
+            const maxTime = Math.max(...currentRun.t.map((t: any[]) => t[t.length - 1] || 0));
+            
+            for (let i = 0; i <= numPoints; i++) {
+                const targetTime = (maxTime / numPoints) * i;
+                const point: any = {
+                    time: parseFloat(targetTime.toFixed(2))
+                };
+
+                for (let u = 0; u < numUmas; u++) {
+                    const horseTime = currentRun.t[u];
+                    const horsePos = currentRun.p[u];
+                    
+                    if (!horseTime || horseTime.length === 0) continue;
+
+                    let idx = 0;
+                    let minDiff = Infinity;
+                    // Binary search or simple search for the closest time index
+                    for (let j = 0; j < horseTime.length; j++) {
+                        const diff = Math.abs(horseTime[j] - targetTime);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            idx = j;
+                        } else if (diff > minDiff) {
+                            break; // Optimization: times are sorted
+                        }
+                    }
+
+                    const pos = horsePos[idx];
+                    point[`uma${u + 1}`] = Math.max(0, courseDistance - pos);
+                }
+                data.push(point);
+            }
+        } else {
+            // Distance-based chart
+            for (let i = 0; i <= numPoints; i++) {
+                const targetPos = (courseDistance / numPoints) * i;
+                
+                const point: any = {
+                    distance: Math.round(targetPos)
+                };
+
+                for (let u = 0; u < numUmas; u++) {
+                    const horsePos = currentRun.p[u];
+                    let idx = 0;
+                    let minDiff = Infinity;
+                    for (let j = 0; j < horsePos.length; j++) {
+                        const diff = Math.abs(horsePos[j] - targetPos);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            idx = j;
+                        } else if (diff > minDiff) {
+                            // Optimization: positions are mostly increasing
+                            if (j > 0 && horsePos[j] > targetPos + 100) break;
+                        }
+                    }
+
+                    if (viewMode === 'speed') {
+                        point[`uma${u + 1}`] = currentRun.v[u][idx];
+                    } else if (viewMode === 'hp') {
+                        point[`uma${u + 1}`] = currentRun.hp[u][idx];
+                    } else {
+                        point[`uma${u + 1}Speed`] = currentRun.v[u][idx];
+                        point[`uma${u + 1}Hp`] = currentRun.hp[u][idx];
                     }
                 }
 
-                if (viewMode === 'speed') {
-                    point[`uma${u + 1}`] = currentRun.v[u][idx];
-                } else if (viewMode === 'hp') {
-                    point[`uma${u + 1}`] = currentRun.hp[u][idx];
-                } else {
-                    point[`uma${u + 1}Speed`] = currentRun.v[u][idx];
-                    point[`uma${u + 1}Hp`] = currentRun.hp[u][idx];
-                }
+                data.push(point);
             }
-
-            data.push(point);
         }
         return data;
     }, [currentRun, viewMode, courseDistance]);
@@ -124,6 +165,12 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                         >
                             SPEED + HP
                         </button>
+                        <button 
+                            onClick={() => setViewMode('distance')}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'distance' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            DISTANCE
+                        </button>
                     </div>
 
                     <select 
@@ -143,14 +190,19 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                 <div className="absolute inset-0 z-10">
                     <ResponsiveContainer key={`${selectedRun}-${viewMode}`} width="100%" height="100%">
                         <LineChart data={chartData} margin={chartMargins}>
-                            <RaceTrackBackground courseid={courseid} />
+                            {(viewMode !== 'distance') && <RaceTrackBackground courseid={courseid} />}
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                             <XAxis 
                                 type="number"
-                                dataKey="distance" 
-                                domain={[0, courseDistance]}
+                                dataKey={viewMode === 'distance' ? "time" : "distance"} 
+                                domain={viewMode === 'distance' ? [0, 'auto'] : [0, courseDistance]}
                                 height={30}
-                                label={{ value: 'Distance (m)', position: 'insideBottom', offset: -10, fontSize: 12 }} 
+                                label={{ 
+                                    value: viewMode === 'distance' ? 'Time (s)' : 'Distance (m)', 
+                                    position: 'insideBottom', 
+                                    offset: -10, 
+                                    fontSize: 12 
+                                }} 
                                 tick={{fontSize: 12}}
                             />
                             {(viewMode === 'speed' || viewMode === 'both') && (
@@ -170,6 +222,21 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                                     label={{ value: 'HP', angle: 90, position: 'insideRight', offset: 5, fontSize: 12 }}
                                     tick={{fontSize: 12}}
                                     domain={[0, 'auto']}
+                                />
+                            )}
+                            {(viewMode === 'distance') && (
+                                <YAxis 
+                                    yAxisId="distance"
+                                    width={60}
+                                    label={{ 
+                                        value: 'Distance to Finish (m)', 
+                                        angle: -90, 
+                                        position: 'insideLeft', 
+                                        offset: 5, 
+                                        fontSize: 12 
+                                    }}
+                                    tick={{fontSize: 12}}
+                                    domain={[0, courseDistance]}
                                 />
                             )}
                             <RechartsTooltip 
@@ -196,6 +263,11 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                                     </React.Fragment>
                                 );
                             })}
+
+                            {viewMode === 'distance' && currentRun?.p.map((_: any, idx: number) => {
+                                if (selectedUma !== 'all' && selectedUma !== idx) return null;
+                                return <Line key={idx} yAxisId="distance" type="monotone" dataKey={`uma${idx + 1}`} name={`${umas[idx]?.name || `Uma ${idx + 1}`} Distance`} stroke={colors[idx % colors.length]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />;
+                            })}
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -219,6 +291,7 @@ function SimulatorApp() {
     const [usePosKeep, setUsePosKeep] = useState(true);
     const [useIntChecks, setUseIntChecks] = useState(false);
     const [forceFullSpurt, setForceFullSpurt] = useState(false);
+    const [forceInnateSkillActivation, setForceInnateSkillActivation] = useState(false);
 
     const umasState = useGetter(O.umas);
     const setUmasState = useSetter(O.umas);
@@ -265,7 +338,8 @@ function SimulatorApp() {
         const options = {
             usePosKeep,
             useIntChecks,
-            forceFullSpurt
+            forceFullSpurt,
+            forceInnateSkillActivation
         };
         try {
             const result = runComparison(samples, course, racedef, umasState, [parseInt(seed) || 0, 0], options);
@@ -402,7 +476,7 @@ function SimulatorApp() {
                                             const state = { ...DEFAULT_HORSE_STATE, outfitId: randomUmaOutfit, samplePolicies: new Map(), skills: SkillSet([]) };
                                             if (randomUmaOutfit && (umas as any)[randomUmaOutfit.slice(0, 4)]) {
                                                 const u = (umas as any)[randomUmaOutfit.slice(0, 4)].outfits[randomUmaOutfit];
-                                                const strats = ['Nige', 'Senkou', 'Sasi', 'Oikomi'];
+                                                const strats = ['Nige', 'Senkou', 'Sasi', 'Oikomi', 'Oonige'];
                                                 const stratAptitudes = u.aptitudes.slice(4, 8);
                                                 let bestVal = 99, bestIdx = 0;
                                                 for (let i = 0; i < 4; i++) {
@@ -427,9 +501,9 @@ function SimulatorApp() {
                             </div>
                             
                             {/* Tab Content */}
-                            <div className="p-4 flex-1 overflow-y-auto flex justify-center bg-slate-50">
+                            <div className="flex-1 overflow-y-auto">
                                 {umasState.map((_: any, idx: number) => (
-                                    <div key={idx} style={{ display: activeUmaTab === idx + 1 ? 'block' : 'none' }} className="w-full max-w-[700px]">
+                                    <div key={idx} style={{ display: activeUmaTab === idx + 1 ? 'block' : 'none' }} className="w-full h-full">
                                         <HorseDef state={O.umas[idx]} aptitudesMode="full" courseDistance={courseDistance} showPolicyEd={false} tabstart={() => idx * 100 + 1} />
                                     </div>
                                 ))}
@@ -506,6 +580,15 @@ function SimulatorApp() {
                                             className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
                                         />
                                         <span className="text-sm text-slate-700">Force full spurt</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={forceInnateSkillActivation} 
+                                            onChange={e => setForceInnateSkillActivation(e.target.checked)} 
+                                            className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
+                                        />
+                                        <span className="text-sm text-slate-700">Force innate skill activation</span>
                                     </label>
                                 </div>
 
