@@ -3,6 +3,7 @@
 @layer base {
   :root {
     color-scheme: dark; /* <-- Add this line */
+    font-size: 13px; 
   }
   body {
     background-color: #131314;

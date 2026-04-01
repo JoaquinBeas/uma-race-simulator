@@ -24,12 +24,12 @@ const UI_STRINGS = Object.freeze({
 const RaceTrackBackground = (props: any) => {
     const { offset, courseid } = props;
     if (!offset) return null;
-    
+
     return (
-        <foreignObject 
-            x={offset.left} 
-            y={offset.top} 
-            width={offset.width} 
+        <foreignObject
+            x={offset.left}
+            y={offset.top}
+            width={offset.width}
             height={offset.height}
             style={{ pointerEvents: 'none', opacity: 0.7 }}
         >
@@ -38,13 +38,13 @@ const RaceTrackBackground = (props: any) => {
     );
 };
 
-const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, courseid: number, umas: any[]}> = ({runData, courseDistance, courseid, umas}) => {
+const RaceGraphVisualizer: React.FC<{ runData: any, courseDistance: number, courseid: number, umas: any[] }> = ({ runData, courseDistance, courseid, umas }) => {
     const [viewMode, setViewMode] = useState<'speed' | 'hp' | 'both' | 'distance'>('speed');
     const [selectedRun, setSelectedRun] = useState<'meanrun' | 'medianrun' | 'minrun' | 'maxrun'>('meanrun');
     const [selectedUma, setSelectedUma] = useState<number | 'all'>('all');
 
     const currentRun = runData[selectedRun];
-    
+
     const chartMargins = { top: 10, right: 30, left: 20, bottom: 30 };
 
     const chartData = useMemo(() => {
@@ -111,9 +111,9 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                 <h3 className="text-lg font-bold text-[#e3e3e3] flex items-center gap-2">
                     Race Simulation Analysis
                 </h3>
-                
+
                 <div className="flex flex-wrap gap-2">
-                    <select 
+                    <select
                         value={selectedUma}
                         onChange={(e) => setSelectedUma(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
                         className="text-xs font-bold bg-[#131314] text-[#e3e3e3] border border-[#444746] rounded-lg px-3 py-1 focus:ring-2 focus:ring-[#8ab4f8] outline-none cursor-pointer"
@@ -125,25 +125,25 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                     </select>
 
                     <div className="bg-[#131314] border border-[#444746] p-1 rounded-lg flex">
-                        <button 
+                        <button
                             onClick={() => setViewMode('speed')}
                             className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'speed' ? 'bg-[#282a2c] text-[#8ab4f8] shadow-sm' : 'text-[#c4c7c5] hover:text-[#e3e3e3]'}`}
                         >
                             SPEED
                         </button>
-                        <button 
+                        <button
                             onClick={() => setViewMode('hp')}
                             className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'hp' ? 'bg-[#282a2c] text-[#8ab4f8] shadow-sm' : 'text-[#c4c7c5] hover:text-[#e3e3e3]'}`}
                         >
                             HP
                         </button>
-                        <button 
+                        <button
                             onClick={() => setViewMode('both')}
                             className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'both' ? 'bg-[#282a2c] text-[#8ab4f8] shadow-sm' : 'text-[#c4c7c5] hover:text-[#e3e3e3]'}`}
                         >
                             SPEED + HP
                         </button>
-                        <button 
+                        <button
                             onClick={() => setViewMode('distance')}
                             className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${viewMode === 'distance' ? 'bg-[#282a2c] text-[#8ab4f8] shadow-sm' : 'text-[#c4c7c5] hover:text-[#e3e3e3]'}`}
                         >
@@ -151,7 +151,7 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                         </button>
                     </div>
 
-                    <select 
+                    <select
                         value={selectedRun}
                         onChange={(e) => setSelectedRun(e.target.value as any)}
                         className="text-xs font-bold bg-[#131314] text-[#e3e3e3] border border-[#444746] rounded-lg px-3 py-1 focus:ring-2 focus:ring-[#8ab4f8] outline-none cursor-pointer"
@@ -170,65 +170,65 @@ const RaceGraphVisualizer: React.FC<{runData: any, courseDistance: number, cours
                         <LineChart data={chartData} margin={chartMargins}>
                             {(viewMode !== 'distance') && <RaceTrackBackground courseid={courseid} />}
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#444746" />
-                            <XAxis 
+                            <XAxis
                                 type="number"
-                                dataKey={viewMode === 'distance' ? "time" : "distance"} 
+                                dataKey={viewMode === 'distance' ? "time" : "distance"}
                                 domain={viewMode === 'distance' ? [0, 'auto'] : [0, courseDistance]}
                                 height={30}
-                                label={{ 
-                                    value: viewMode === 'distance' ? 'Time (s)' : 'Distance (m)', 
-                                    position: 'insideBottom', 
-                                    offset: -10, 
+                                label={{
+                                    value: viewMode === 'distance' ? 'Time (s)' : 'Distance (m)',
+                                    position: 'insideBottom',
+                                    offset: -10,
                                     fill: '#c4c7c5',
-                                    fontSize: 12 
-                                }} 
-                                tick={{fontSize: 12, fill: '#c4c7c5'}}
+                                    fontSize: 12
+                                }}
+                                tick={{ fontSize: 12, fill: '#c4c7c5' }}
                             />
                             {(viewMode === 'speed' || viewMode === 'both') && (
-                                <YAxis 
+                                <YAxis
                                     yAxisId="speed"
                                     width={60}
                                     label={{ value: 'Speed (m/s)', angle: -90, position: 'insideLeft', offset: 5, fill: '#c4c7c5', fontSize: 12 }}
-                                    tick={{fontSize: 12, fill: '#c4c7c5'}}
+                                    tick={{ fontSize: 12, fill: '#c4c7c5' }}
                                     domain={['auto', 'auto']}
                                 />
                             )}
                             {(viewMode === 'hp' || viewMode === 'both') && (
-                                <YAxis 
+                                <YAxis
                                     yAxisId="hp"
                                     orientation="right"
                                     width={60}
                                     label={{ value: 'HP', angle: 90, position: 'insideRight', offset: 5, fill: '#c4c7c5', fontSize: 12 }}
-                                    tick={{fontSize: 12, fill: '#c4c7c5'}}
+                                    tick={{ fontSize: 12, fill: '#c4c7c5' }}
                                     domain={[0, 'auto']}
                                 />
                             )}
                             {(viewMode === 'distance') && (
-                                <YAxis 
+                                <YAxis
                                     yAxisId="distance"
                                     width={60}
-                                    label={{ 
-                                        value: 'Distance to Finish (m)', 
-                                        angle: -90, 
-                                        position: 'insideLeft', 
-                                        offset: 5, 
+                                    label={{
+                                        value: 'Distance to Finish (m)',
+                                        angle: -90,
+                                        position: 'insideLeft',
+                                        offset: 5,
                                         fill: '#c4c7c5',
-                                        fontSize: 12 
+                                        fontSize: 12
                                     }}
-                                    tick={{fontSize: 12, fill: '#c4c7c5'}}
+                                    tick={{ fontSize: 12, fill: '#c4c7c5' }}
                                     domain={[0, courseDistance]}
                                 />
                             )}
-                            <RechartsTooltip 
+                            <RechartsTooltip
                                 contentStyle={{ backgroundColor: '#1e1f20', borderColor: '#444746', color: '#e3e3e3', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.5)' }}
                             />
-                            <Legend verticalAlign="top" height={36} wrapperStyle={{ color: '#e3e3e3' }}/>
-                            
+                            <Legend verticalAlign="top" height={36} wrapperStyle={{ color: '#e3e3e3' }} />
+
                             {viewMode === 'speed' && currentRun?.p.map((_: any, idx: number) => {
                                 if (selectedUma !== 'all' && selectedUma !== idx) return null;
                                 return <Line key={idx} yAxisId="speed" type="monotone" dataKey={`uma${idx + 1}`} name={`${umas[idx]?.name || `Uma ${idx + 1}`} Speed`} stroke={UMA_COLORS[idx % UMA_COLORS.length]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />;
                             })}
-                            
+
                             {viewMode === 'hp' && currentRun?.p.map((_: any, idx: number) => {
                                 if (selectedUma !== 'all' && selectedUma !== idx) return null;
                                 return <Line key={idx} yAxisId="hp" type="monotone" dataKey={`uma${idx + 1}`} name={`${umas[idx]?.name || `Uma ${idx + 1}`} HP`} stroke={UMA_COLORS[idx % UMA_COLORS.length]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />;
@@ -260,12 +260,12 @@ function SimulatorApp() {
     const [activeUmaTab, setActiveUmaTab] = useState(1);
     const umaTabsRef = useGrabScroll();
     const resultsRef = useGrabScroll();
-    
+
     const [courseid, setCourseid] = useState(10101);
     const [weather, setWeather] = useState(1);
     const [ground, setGround] = useState(1);
     const [season, setSeason] = useState(1);
-    
+
     const [samples, setSamples] = useState(500);
     const [seed, setSeed] = useState(Math.floor(Math.random() * 0xFFFFFFFF).toString());
     const [usePosKeep, setUsePosKeep] = useState(true);
@@ -303,7 +303,7 @@ function SimulatorApp() {
 
     const courseDistance = useMemo(() => CourseHelpers.getCourse(courseid).distance, [courseid]);
 
-    const [simulationResult, setSimulationResult] = useState<{wins: number[], ties: number, runData: any, aggregateStats: any} | null>(null);
+    const [simulationResult, setSimulationResult] = useState<{ wins: number[], ties: number, runData: any, aggregateStats: any } | null>(null);
 
     const handleCompare = () => {
         const course = CourseHelpers.getCourse(courseid);
@@ -323,7 +323,7 @@ function SimulatorApp() {
         };
         try {
             const result = runComparison(samples, course, racedef, umasState, [parseInt(seed) || 0, 0], options);
-            
+
             setSimulationResult({ wins: result.wins, ties: result.ties, runData: result.runData, aggregateStats: result.aggregateStats });
         } catch (e) {
             console.error(e);
@@ -332,8 +332,8 @@ function SimulatorApp() {
 
     return (
         <div className="min-h-screen bg-[#131314] text-[#e3e3e3] font-sans p-2 md:p-4">
-            <div className="max-w-[95rem] mx-auto space-y-6">
-                
+            <div className="max-w-[100%] xl:px-30 mx-auto space-y-6">
+
                 {/* Header */}
                 <header className="flex items-center justify-between pb-4 border-b border-[#444746]">
                     <h1 className="text-3xl font-extrabold tracking-tight text-[#e3e3e3]">Uma Simulator</h1>
@@ -341,10 +341,10 @@ function SimulatorApp() {
                 </header>
 
                 {/* Top Row: Track & Umas */}
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                    
+                <div className="grid grid-cols-1 xl:grid-cols-24 gap-6">
+
                     {/* Left Column: Track */}
-                    <div className="xl:col-span-6 space-y-6">
+                    <div className="xl:col-span-13 space-y-6">
                         {/* Race Track Card */}
                         <div className="bg-[#1e1f20] rounded-xl shadow-md border border-[#444746] overflow-hidden">
                             <div className="bg-[#282a2c] border-b border-[#444746] px-4 py-3 font-semibold text-[#e3e3e3]">
@@ -352,15 +352,15 @@ function SimulatorApp() {
                             </div>
                             <div className="p-4 flex flex-col items-center space-y-6">
                                 <div className="w-full overflow-x-auto flex justify-center">
-                                    <RaceTrack courseid={courseid} width={700} height={210} regions={[]} />
+                                    <RaceTrack courseid={courseid} width={650} height={210} regions={[]} />
                                 </div>
-                                
+
                                 <div className="w-full space-y-6">
                                     <div>
                                         <label className="block text-xs font-medium text-[#c4c7c5] mb-2">Course</label>
                                         <TrackSelect courseid={courseid} setCourseid={setCourseid} tabindex={200} />
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-3 gap-4 mb-3">
                                         <div>
                                             <label className="block text-xs font-medium text-[#c4c7c5] mb-2">Weather</label>
@@ -396,18 +396,18 @@ function SimulatorApp() {
                     </div>
 
                     {/* Right Column: Umamusume Definitions */}
-                    <div className="xl:col-span-6">
+                    <div className="xl:col-span-11">
                         <div className="bg-[#1e1f20] rounded-xl shadow-md border border-[#444746] overflow-hidden flex flex-col h-full">
-                            
+
                             {/* Tabs */}
-                            <div 
+                            <div
                                 ref={umaTabsRef}
                                 className="flex bg-[#131314] border-b border-[#444746] overflow-x-auto grab-scroll"
                             >
                                 {umasState.map((uma: any, idx: number) => {
                                     const color = UMA_COLORS[idx % UMA_COLORS.length];
                                     return (
-                                        <div 
+                                        <div
                                             key={idx}
                                             className={`flex-1 flex items-center justify-between py-3 px-4 font-bold text-center transition-colors whitespace-nowrap ${activeUmaTab === idx + 1 ? 'bg-[#1e1f20] border-t-2' : 'text-[#c4c7c5] hover:bg-[#282a2c] border-t-2 border-t-transparent'}`}
                                             style={activeUmaTab === idx + 1 ? { color: color, borderTopColor: color } : {}}
@@ -424,8 +424,8 @@ function SimulatorApp() {
                                                     style={{ borderColor: color, color: color }}
                                                 />
                                             ) : (
-                                                <span 
-                                                    className="cursor-pointer flex-1" 
+                                                <span
+                                                    className="cursor-pointer flex-1"
                                                     onClick={() => setActiveUmaTab(idx + 1)}
                                                     onDoubleClick={() => {
                                                         setEditingTab(idx);
@@ -451,13 +451,13 @@ function SimulatorApp() {
                                     );
                                 })}
                                 {umasState.length < 18 && (
-                                    <button 
+                                    <button
                                         className="py-3 px-4 font-bold text-center text-[#8ab4f8] hover:bg-[#282a2c] transition-colors border-t-2 border-t-transparent whitespace-nowrap"
                                         onClick={() => {
                                             const umaIds = Object.keys(umas);
                                             const randomUmaId = umaIds[Math.floor(Math.random() * umaIds.length)];
                                             const randomUmaOutfit = Object.keys((umas as any)[randomUmaId].outfits)[0];
-                                            
+
                                             const state = { ...DEFAULT_HORSE_STATE, outfitId: randomUmaOutfit, samplePolicies: new Map(), skills: SkillSet([]) };
                                             if (randomUmaOutfit && (umas as any)[randomUmaOutfit.slice(0, 4)]) {
                                                 const u = (umas as any)[randomUmaOutfit.slice(0, 4)].outfits[randomUmaOutfit];
@@ -472,7 +472,7 @@ function SimulatorApp() {
                                                 }
                                                 const uid = uniqueSkillForUma(randomUmaOutfit, state.starCount as any);
                                                 if (uid) state.skills.set((skillmeta as any)[uid].groupId, uid);
-                                                
+
                                                 state.strategy = strats[bestIdx] as any;
                                                 state.aptitudes = u.aptitudes.map((i: number) => ' GFEDCBA'[i]) as any;
                                             }
@@ -484,17 +484,17 @@ function SimulatorApp() {
                                     </button>
                                 )}
                             </div>
-                            
+
                             {/* Tab Content */}
                             <div className="flex-1 overflow-y-auto">
                                 {umasState.map((_: any, idx: number) => (
                                     <div key={idx} style={{ display: activeUmaTab === idx + 1 ? 'block' : 'none' }} className="w-full h-full">
-                                        <HorseDef 
-                                            state={O.umas[idx]} 
-                                            aptitudesMode="full" 
-                                            courseDistance={courseDistance} 
-                                            showPolicyEd={false} 
-                                            tabstart={() => idx * 100 + 1} 
+                                        <HorseDef
+                                            state={O.umas[idx]}
+                                            aptitudesMode="full"
+                                            courseDistance={courseDistance}
+                                            showPolicyEd={false}
+                                            tabstart={() => idx * 100 + 1}
                                             accentColor={UMA_COLORS[idx % UMA_COLORS.length]}
                                         />
                                     </div>
@@ -510,7 +510,7 @@ function SimulatorApp() {
                         <div className="bg-[#282a2c] border-b border-[#444746] px-4 py-3 font-semibold text-[#e3e3e3]">
                             Simulation Dashboard
                         </div>
-                        
+
                         {/* Controls and Results Section */}
                         <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 border-b border-[#282a2c]">
                             {/* Controls */}
@@ -518,23 +518,23 @@ function SimulatorApp() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-medium text-[#c4c7c5] mb-1">Samples</label>
-                                        <input 
-                                            type="number" 
-                                            value={samples} 
-                                            onChange={e => setSamples(+e.target.value)} 
+                                        <input
+                                            type="number"
+                                            value={samples}
+                                            onChange={e => setSamples(+e.target.value)}
                                             className="w-full border border-[#444746] rounded-md p-2 text-sm bg-[#131314] text-[#e3e3e3] focus:ring-2 focus:ring-[#8ab4f8] focus:border-[#8ab4f8] outline-none"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-[#c4c7c5] mb-1">Seed</label>
                                         <div className="flex">
-                                            <input 
-                                                type="text" 
-                                                value={seed} 
-                                                onChange={e => setSeed(e.target.value)} 
+                                            <input
+                                                type="text"
+                                                value={seed}
+                                                onChange={e => setSeed(e.target.value)}
                                                 className="w-full border border-[#444746] rounded-l-md p-2 text-sm bg-[#131314] text-[#e3e3e3] focus:ring-2 focus:ring-[#8ab4f8] focus:border-[#8ab4f8] outline-none"
                                             />
-                                            <button 
+                                            <button
                                                 onClick={() => setSeed(Math.floor(Math.random() * 0xFFFFFFFF).toString())}
                                                 className="bg-[#282a2c] border border-l-0 border-[#444746] rounded-r-md px-3 hover:bg-[#444746] transition-colors"
                                                 title="Randomize Seed"
@@ -547,44 +547,44 @@ function SimulatorApp() {
 
                                 <div className="space-y-2 pt-2 flex flex-col sm:flex-row sm:gap-6 sm:space-y-0">
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={usePosKeep} 
-                                            onChange={e => setUsePosKeep(e.target.checked)} 
+                                        <input
+                                            type="checkbox"
+                                            checked={usePosKeep}
+                                            onChange={e => setUsePosKeep(e.target.checked)}
                                             className="rounded text-[#8ab4f8] bg-[#131314] border-[#444746] focus:ring-[#8ab4f8] w-4 h-4"
                                         />
                                         <span className="text-sm text-[#e3e3e3]">Simulate position keep</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={useIntChecks} 
-                                            onChange={e => setUseIntChecks(e.target.checked)} 
+                                        <input
+                                            type="checkbox"
+                                            checked={useIntChecks}
+                                            onChange={e => setUseIntChecks(e.target.checked)}
                                             className="rounded text-[#8ab4f8] bg-[#131314] border-[#444746] focus:ring-[#8ab4f8] w-4 h-4"
                                         />
                                         <span className="text-sm text-[#e3e3e3]">Wit checks for skills</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={forceFullSpurt} 
-                                            onChange={e => setForceFullSpurt(e.target.checked)} 
+                                        <input
+                                            type="checkbox"
+                                            checked={forceFullSpurt}
+                                            onChange={e => setForceFullSpurt(e.target.checked)}
                                             className="rounded text-[#8ab4f8] bg-[#131314] border-[#444746] focus:ring-[#8ab4f8] w-4 h-4"
                                         />
                                         <span className="text-sm text-[#e3e3e3]">Force full spurt</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={forceInnateSkillActivation} 
-                                            onChange={e => setForceInnateSkillActivation(e.target.checked)} 
+                                        <input
+                                            type="checkbox"
+                                            checked={forceInnateSkillActivation}
+                                            onChange={e => setForceInnateSkillActivation(e.target.checked)}
                                             className="rounded text-[#8ab4f8] bg-[#131314] border-[#444746] focus:ring-[#8ab4f8] w-4 h-4"
                                         />
                                         <span className="text-sm text-[#e3e3e3]">Force innate skill activation</span>
                                     </label>
                                 </div>
 
-                                <button 
+                                <button
                                     onClick={handleCompare}
                                     className="w-full bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#131314] font-bold py-3 rounded-lg shadow-sm transition-colors mt-4 text-lg flex items-center justify-center gap-2"
                                 >
@@ -597,7 +597,7 @@ function SimulatorApp() {
                                 {simulationResult ? (
                                     <div>
                                         <h3 className="text-sm font-bold text-[#e3e3e3] uppercase tracking-wider mb-4">Simulation Results</h3>
-                                        <div 
+                                        <div
                                             ref={resultsRef}
                                             className="space-y-5 max-h-[300px] overflow-y-auto pr-2 grab-scroll"
                                         >
@@ -611,7 +611,7 @@ function SimulatorApp() {
                                                             <span className="text-xl font-mono font-bold" style={{ color }}>{wins}</span>
                                                         </div>
                                                         <div className="w-full bg-[#282a2c] rounded-full h-3">
-                                                            <div 
+                                                            <div
                                                                 className="h-3 rounded-full transition-all duration-500"
                                                                 style={{ width: `${(wins / samples) * 100}%`, backgroundColor: color }}
                                                             ></div>
@@ -636,14 +636,14 @@ function SimulatorApp() {
                                 )}
                             </div>
                         </div>
-                        
+
                         {/* Graph Section */}
                         {simulationResult && (
                             <div className="bg-[#131314]">
                                 <div className="p-6">
-                                    <RaceGraphVisualizer 
-                                        runData={simulationResult.runData} 
-                                        courseDistance={courseDistance} 
+                                    <RaceGraphVisualizer
+                                        runData={simulationResult.runData}
+                                        courseDistance={courseDistance}
                                         courseid={courseid}
                                         umas={umasState}
                                     />
@@ -685,7 +685,7 @@ export default function App(props: any) {
                 }
                 const uid = uniqueSkillForUma(outfitId, state.starCount as any);
                 if (uid) state.skills.set((skillmeta as any)[uid].groupId, uid);
-                
+
                 state.strategy = strats[bestIdx] as any;
                 state.aptitudes = u.aptitudes.map((i: number) => ' GFEDCBA'[i]) as any;
             }
