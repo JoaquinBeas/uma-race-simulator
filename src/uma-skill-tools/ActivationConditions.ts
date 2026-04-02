@@ -2,7 +2,7 @@ import { CourseData, CourseHelpers, Phase } from './CourseData';
 import { HorseParameters } from './HorseTypes';
 import { Region, RegionList } from './Region';
 import { RaceState, DynamicCondition } from './RaceSolver';
-import { ImmediatePolicy } from './ActivationSamplePolicy';
+import { ImmediatePolicy, RandomPolicy, StraightRandomPolicy, AllCornerRandomPolicy } from './ActivationSamplePolicy';
 
 export interface Condition {
     name: string;
@@ -83,15 +83,24 @@ export class CmpOperator extends Operator {
         // Variante: RANDOM EN CURVAS (corner_random, all_corner_random)
         if (name === 'corner_random' || name === 'all_corner_random' || name === 'corner') {
             let targetRegions: Region[] = [];
-            if (name === 'all_corner_random' || (name === 'corner' && opName === 'neq' && arg === 0)) {
+            const isCornerNeq0 = name === 'corner' && opName === 'neq' && arg === 0;
+            const isCornerEq0 = name === 'corner' && opName === 'eq' && arg === 0;
+
+            if (name === 'all_corner_random' || isCornerNeq0) {
                 targetRegions = course.corners.map(c => new Region(c.start, c.start + c.length));
+            } else if (isCornerEq0) {
+                targetRegions = course.straights.map(s => new Region(s.start, s.end));
             } else if (arg > 0) {
                 const c = course.corners[arg - 1];
                 if (c) targetRegions = [new Region(c.start, c.start + c.length)];
             }
 
             return [regions.rmap(r => targetRegions.map(tr => r.intersect(tr))),
-            (state) => name === 'all_corner_random' ? state.currentCornerIdx !== 0 : (state as any).currentCornerIdx === arg];
+            (state) => {
+                if (name === 'all_corner_random' || isCornerNeq0) return state.currentCornerIdx !== 0;
+                if (isCornerEq0) return state.currentCornerIdx === 0;
+                return state.currentCornerIdx === arg;
+            }];
         }
 
         // Variante: RANDOM EN RECTAS (straight_random, last_straight_random)
@@ -105,7 +114,7 @@ export class CmpOperator extends Operator {
             }
 
             return [regions.rmap(r => targetRegions.map(tr => r.intersect(tr))),
-            (state) => (state as any).currentCornerIdx === 0];
+            (state) => (name === 'is_last_straight' ? state.isLastStraight : state.currentCornerIdx === 0)];
         }
 
         // Variante: RANDOM EN CUESTAS (up_slope_random, down_slope_random)
@@ -115,6 +124,30 @@ export class CmpOperator extends Operator {
             const targetRegions = slopes.map(s => new Region(s.start, s.start + s.length));
 
             return [regions.rmap(r => targetRegions.map(tr => r.intersect(tr))), (state) => true];
+        }
+
+        // Variante: FINAL CORNER
+        if (name === 'is_finalcorner' || name === 'is_finalcorner_laterhalf') {
+            const lastCorner = course.corners[course.corners.length - 1];
+            if (!lastCorner) return [new RegionList(), (state) => false];
+            
+            let start = lastCorner.start;
+            let end = lastCorner.start + lastCorner.length;
+            
+            if (name === 'is_finalcorner_laterhalf') {
+                start = start + (end - start) / 2;
+            }
+            
+            const targetRegion = new Region(start, end);
+            
+            if (opName === 'eq' && arg === 1) {
+                return [regions.rmap(r => r.intersect(targetRegion)), (state) => (name === 'is_finalcorner' ? state.isFinalCorner : state.isFinalCornerLaterHalf)];
+            } else if (opName === 'eq' && arg === 0) {
+                // Si es == 0, significa que NO debe estar en la curva final.
+                // Esto es más complejo de representar en regiones si queremos ser exactos, 
+                // pero por ahora lo dejamos como un predicado dinámico.
+                return [regions, (state) => !(name === 'is_finalcorner' ? state.isFinalCorner : state.isFinalCornerLaterHalf)];
+            }
         }
 
         // Variante: RANDOM DESPUÉS DE X% (distance_rate_after_random)
@@ -153,20 +186,30 @@ export class CmpOperator extends Operator {
             }), (state) => true];
         }
 
+        if (name === 'accumulatetime' && (opName === 'gte' || opName === 'gt')) {
+            const t = arg;
+            const baseSpeed = 20.0 - (course.distance - 2000) / 1000.0;
+            const allowedRegion = new Region(0.85 * baseSpeed * t, course.distance);
+            regions = regions.rmap(r => r.intersect(allowedRegion));
+        }
+
         // --- 4. PREDICADO DINÁMICO (Evaluación por frame) ---
         const predicate: DynamicCondition = (state: RaceState) => {
             let val: any;
             switch (name) {
                 case 'order': val = state.order; break;
-                case 'order_rate': val = (state.order / state.numUmas) * 100; break;
+                case 'order_rate': val = ((state.order - 1) / Math.max(1, state.numUmas - 1)) * 100; break;
                 case 'hp_per': val = state.hp.hpRatioRemaining() * 100; break;
                 case 'accumulatetime': val = state.accumulatetime.t; break;
                 case 'temptation_count': val = state.temptationCount; break;
                 case 'is_temptation': val = state.isKakari ? 1 : 0; break;
                 case 'is_lastspurt': val = state.isLastSpurt ? 1 : 0; break;
+                case 'is_finalcorner': val = state.isFinalCorner ? 1 : 0; break;
+                case 'is_finalcorner_laterhalf': val = state.isFinalCornerLaterHalf ? 1 : 0; break;
+                case 'is_last_straight': val = state.isLastStraight ? 1 : 0; break;
                 case 'furlong': val = (state as any).furlong; break;
-                case 'bashin_diff_infront': val = state.bashinDiffInfront; break;
-                case 'bashin_diff_behind': val = state.bashinDiffBehind; break;
+                case 'bashin_diff_infront': val = state.bashinDiffInfront / 2.5; break;
+                case 'bashin_diff_behind': val = state.bashinDiffBehind / 2.5; break;
                 case 'change_order_onetime': val = state.changeOrderLastFrame; break;
                 case 'blocked_front_continuetime': val = (state as any).blockedFrontTime; break;
                 case 'infront_near_lane_time': val = (state as any).nearLaneTimeInfront; break;
@@ -251,7 +294,17 @@ export class AndOperator extends LogicalOperator { }
 export class OrOperator extends LogicalOperator { }
 
 export const Conditions: { [key: string]: Condition } = new Proxy({}, {
-    get: (target, name: string) => ({ name, samplePolicy: null })
+    get: (target, name: string) => {
+        let policy = ImmediatePolicy;
+        if (name === 'straight_random' || name === 'last_straight_random' || name === 'phase_straight_random') {
+            policy = StraightRandomPolicy;
+        } else if (name === 'all_corner_random') {
+            policy = AllCornerRandomPolicy;
+        } else if (name.includes('random')) {
+            policy = RandomPolicy;
+        }
+        return { name, samplePolicy: policy };
+    }
 });
 
 export const random = (obj: any) => ({ ...obj, sample: () => [] });

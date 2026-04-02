@@ -164,7 +164,7 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
         startDelays: umas.map(() => [] as number[]),
         topSpeeds: umas.map(() => [] as number[]),
         lengths: umas.map(() => [] as number[]),
-        skillStats: umas.map(() => new Map<string, {count: number, posSum: number}>()),
+        skillStats: umas.map(() => new Map<string, {count: number, posSum: number, durationSum: number}>()),
         overtakes: umas.map(() => 0)
     };
     
@@ -188,6 +188,54 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
         let allFinished = false;
         while (!allFinished) {
             allFinished = true;
+            
+            // Calculate orders based on current positions
+            const currentPositions = solvers.map(s => s.pos);
+            const sortedIndices = solvers.map((_, idx) => idx).sort((a, b) => currentPositions[b] - currentPositions[a]);
+            sortedIndices.forEach((solverIdx, rank) => {
+                const s = solvers[solverIdx];
+                const newOrder = rank + 1;
+                const diff = s.order - newOrder; // Positive if rank improved (overtook)
+                
+                if (diff > 0) {
+                    s.overtakesInPhase[s.phase] += diff;
+                    if (s.isFinalCorner) s.overtakesInFinalCorner += diff;
+                }
+                
+                s.changeOrderLastFrame = diff;
+                s.order = newOrder;
+                s.numUmas = solvers.length;
+            });
+
+            // Update proximity data for each solver based on all other Umas
+            solvers.forEach((s, idx) => {
+                let minFrontDist = Infinity;
+                let minBehindDist = Infinity;
+                
+                solvers.forEach((other, oIdx) => {
+                    if (idx === oIdx) return;
+                    const dist = other.pos - s.pos;
+                    if (dist > 0) {
+                        if (dist < minFrontDist) minFrontDist = dist;
+                    } else {
+                        if (-dist < minBehindDist) minBehindDist = -dist;
+                    }
+                });
+                
+                s.bashinDiffInfront = minFrontDist === Infinity ? 999 : minFrontDist;
+                s.bashinDiffBehind = minBehindDist === Infinity ? 999 : minBehindDist;
+                
+                const dt = 1/15;
+                if (minFrontDist < 2) s.blockedFrontTime += dt;
+                else s.blockedFrontTime = 0;
+                
+                if (minFrontDist < 2.5) s.nearLaneTimeInfront += dt;
+                else s.nearLaneTimeInfront = 0;
+                
+                if (minBehindDist < 2.5) s.nearLaneTimeBehind += dt;
+                else s.nearLaneTimeBehind = 0;
+            });
+
             for (let j = 0; j < solvers.length; j++) {
                 const s = solvers[j];
                 if (s.pos < course.distance) {
@@ -217,10 +265,13 @@ export function runComparison(nsamples: number, course: CourseData, racedef: any
 
             data.sk[j].forEach((val: any, id: string) => {
                 if (id === 'downhill') return;
-                const stats = aggregateStats.skillStats[j].get(id) || {count: 0, posSum: 0};
+                const stats = aggregateStats.skillStats[j].get(id) || {count: 0, posSum: 0, durationSum: 0};
                 stats.count++;
                 if (Array.isArray(val) && val.length > 0) {
                     stats.posSum += val[0][0];
+                    if (val[0][1] !== -1) {
+                        stats.durationSum += (val[0][1] - val[0][0]);
+                    }
                 }
                 aggregateStats.skillStats[j].set(id, stats);
             });

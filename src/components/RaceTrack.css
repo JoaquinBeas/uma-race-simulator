@@ -4,6 +4,10 @@
 	z-index: 0;
 }
 
+.textbox {
+    overflow: visible;
+}
+
 .racetrackHeader {
     display: flex;
     flex-direction: column;

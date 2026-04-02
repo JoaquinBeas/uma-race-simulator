@@ -357,9 +357,9 @@ export function RaceTrack(props: any) {
                     state.rungs[i % 10].push(r);
                     const y = 90 - 10 * i;
                     return (
-                        <svg key={`region-tb-${state.elem.length}-${ri}`} className="textbox" x={x + '%'} y={y + '%'} width={w + '%'} height="10%">
+                        <svg key={`region-tb-${state.elem.length}-${ri}`} className="textbox" x={x + '%'} y={y + '%'} width={w + '%'} height="10%" overflow="visible">
                             <rect x="0" y="0" width="100%" height="100%" fill={desc.color.fill} stroke={desc.color.stroke} />
-                            <text x="0" y="50%" fontSize="12px" dominantBaseline="central">{desc.text}</text>
+                            <text x="0" y="50%" fontSize="12px" fontWeight="bold" fill="white" dominantBaseline="central">{desc.text}</text>
                         </svg>
                     );
                 });

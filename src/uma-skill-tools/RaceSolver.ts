@@ -120,6 +120,7 @@ export interface RaceState {
 	readonly course: CourseData;
 	// --- Datos extendidos para condiciones ---
 	readonly isFinalCorner: boolean;
+	readonly isFinalCornerLaterHalf: boolean;
 	readonly currentCornerIdx: number;
 	readonly currentStraightIdx: number;
 	readonly isLastStraight: boolean;
@@ -265,6 +266,7 @@ export class RaceSolver implements RaceState {
 
 	// --- Nuevos Rastreadores de Estado para Condiciones ---
 	isFinalCorner: boolean = false;
+	isFinalCornerLaterHalf: boolean = false;
 	currentCornerIdx: number = 0;
 	currentStraightIdx: number = 0;
 	isLastStraight: boolean = false;
@@ -495,6 +497,10 @@ export class RaceSolver implements RaceState {
 		if (this.course.corners.length > 0) {
 			const lastCorner = this.course.corners[this.course.corners.length - 1];
 			this.isFinalCorner = (this.pos >= lastCorner.start && this.pos <= lastCorner.start + lastCorner.length);
+			this.isFinalCornerLaterHalf = (this.pos >= lastCorner.start + lastCorner.length / 2 && this.pos <= lastCorner.start + lastCorner.length);
+		} else {
+			this.isFinalCorner = false;
+			this.isFinalCornerLaterHalf = false;
 		}
 
 		const lastStr = this.course.straights[this.course.straights.length - 1];
@@ -536,7 +542,7 @@ export class RaceSolver implements RaceState {
 
 		// 3. Persistencia de Posición (_continue) - Empieza tras 5 segundos
 		if (this.accumulatetime.t > 5) {
-			const rate = (this.order / this.numUmas) * 100;
+			const rate = ((this.order - 1) / Math.max(1, this.numUmas - 1)) * 100;
 			if (rate > 20) this.orderRateIn20Continue = false;
 			if (rate > 40) this.orderRateIn40Continue = false;
 			if (rate > 50) this.orderRateIn50Continue = false;

@@ -1,15 +1,16 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 import { O, State, makeState, useGetter, useSetter } from '../optics';
 import { SkillSet, DEFAULT_HORSE_STATE, uniqueSkillForUma } from '../components/HorseDefTypes';
 import { HorseDef } from '../components/HorseDef';
-import { RaceTrack, TrackSelect } from '../components/RaceTrack';
+import { RaceTrack, TrackSelect, RegionDisplayType } from '../components/RaceTrack';
 import { CourseHelpers } from '../uma-skill-tools/CourseData';
 import { runComparison } from '../umalator/compare';
 import { CompareComponent, SkillTableComponent, StaminaCalculatorComponent } from './AnalysisComponents';
 import { useGrabScroll } from '../lib/useGrabScroll';
 import umas from '../uma-skill-tools/data/umas.json';
 import skillmeta from '../uma-skill-tools/data/skill_meta.json';
+import skillnames from '../uma-skill-tools/data/skillnames.json';
 
 import './app.css';
 
@@ -22,30 +23,74 @@ const UI_STRINGS = Object.freeze({
 });
 
 const RaceTrackBackground = (props: any) => {
-    const { offset, courseid } = props;
-    if (!offset) return null;
+    const { courseid, x, y, width, height, viewBox, regions } = props;
+
+    const renderX = x !== undefined ? x : (viewBox?.x || 20);
+    const renderY = y !== undefined ? y : (viewBox?.y || 10);
+    const renderWidth = width !== undefined ? width : (viewBox?.width || "100%");
+    const renderHeight = height !== undefined ? height : (viewBox?.height || "100%");
 
     return (
         <foreignObject
-            x={offset.left}
-            y={offset.top}
-            width={offset.width}
-            height={offset.height}
-            style={{ pointerEvents: 'none', opacity: 0.7 }}
+            x={renderX}
+            y={renderY}
+            width={renderWidth}
+            height={renderHeight}
+            style={{ pointerEvents: 'none', opacity: 0.8 }}
         >
-            <RaceTrack courseid={courseid} width="100%" height="100%" hideHeader={true} regions={[]} />
+            <div xmlns="http://www.w3.org/1999/xhtml" style={{ width: '100%', height: '100%' }}>
+                <RaceTrack courseid={courseid} width="100%" height="100%" hideHeader={true} regions={regions || []} xOffset={0} yOffset={0} xExtra={0} yExtra={0} />
+            </div>
         </foreignObject>
     );
 };
 
-const RaceGraphVisualizer: React.FC<{ runData: any, courseDistance: number, courseid: number, umas: any[] }> = ({ runData, courseDistance, courseid, umas }) => {
+const CustomSkillLabel = (props: any) => {
+    const { viewBox, value, fill, index } = props;
+    return (
+        <text x={viewBox.x} y={viewBox.y + 15 + (index * 12)} fill={fill} fontSize={10} textAnchor="middle">
+            {value}
+        </text>
+    );
+};
+
+const RaceGraphVisualizer: React.FC<{ runData: any, aggregateStats: any, courseDistance: number, courseid: number, umas: any[] }> = ({ runData, aggregateStats, courseDistance, courseid, umas }) => {
     const [viewMode, setViewMode] = useState<'speed' | 'hp' | 'both' | 'distance'>('speed');
     const [selectedRun, setSelectedRun] = useState<'meanrun' | 'medianrun' | 'minrun' | 'maxrun'>('meanrun');
     const [selectedUma, setSelectedUma] = useState<number | 'all'>('all');
+    const [showSkills, setShowSkills] = useState(false);
 
     const currentRun = runData[selectedRun];
 
     const chartMargins = { top: 10, right: 30, left: 20, bottom: 30 };
+
+    const skillRegions = useMemo(() => {
+        if (!showSkills || !aggregateStats || !aggregateStats.skillStats) return [];
+        const regions: any[] = [];
+        
+        aggregateStats.skillStats.forEach((umaSkills: Map<string, any>, umaIdx: number) => {
+            if (selectedUma !== 'all' && selectedUma !== umaIdx) return;
+            
+            umaSkills.forEach((s: any, skillId: string) => {
+                if (skillId === 'downhill' || skillId === 'kakari') return;
+                if (s.count === 0) return; // Didn't activate
+                
+                const skillName = (skillnames as any)[skillId]?.[0] || (skillmeta as any)[skillId]?.name || skillId;
+                const color = UMA_COLORS[umaIdx % UMA_COLORS.length];
+                const avgPos = s.posSum / s.count;
+                const avgDuration = (s.durationSum || 0) / s.count;
+                
+                regions.push({
+                    type: RegionDisplayType.Textbox,
+                    regions: [{ start: avgPos, end: avgPos + Math.max(avgDuration, 15) }],
+                    color: { stroke: color, fill: color + '60' }, // Slightly more opaque fill
+                    text: skillName,
+                    height: 10
+                });
+            });
+        });
+        return regions;
+    }, [aggregateStats, showSkills, selectedUma]);
 
     const chartData = useMemo(() => {
         if (!currentRun) return [];
@@ -161,6 +206,13 @@ const RaceGraphVisualizer: React.FC<{ runData: any, courseDistance: number, cour
                         <option value="minrun" className="bg-[#1e1f20] text-[#e3e3e3]">Min Run ({umas[0]?.name || 'Uma 1'} Worst)</option>
                         <option value="maxrun" className="bg-[#1e1f20] text-[#e3e3e3]">Max Run ({umas[0]?.name || 'Uma 1'} Best)</option>
                     </select>
+
+                    <button
+                        onClick={() => setShowSkills(!showSkills)}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all border ${showSkills ? 'bg-[#282a2c] text-[#8ab4f8] border-[#8ab4f8] shadow-sm' : 'bg-[#131314] text-[#c4c7c5] border-[#444746] hover:text-[#e3e3e3]'}`}
+                    >
+                        {showSkills ? 'HIDE SKILLS' : 'SHOW SKILLS'}
+                    </button>
                 </div>
             </div>
 
@@ -168,7 +220,7 @@ const RaceGraphVisualizer: React.FC<{ runData: any, courseDistance: number, cour
                 <div className="absolute inset-0 z-10">
                     <ResponsiveContainer key={`${selectedRun}-${viewMode}`} width="100%" height="100%">
                         <LineChart data={chartData} margin={chartMargins}>
-                            {(viewMode !== 'distance') && <RaceTrackBackground courseid={courseid} />}
+                            {(viewMode !== 'distance') && <ReferenceArea yAxisId={viewMode === 'hp' ? 'hp' : 'speed'} x1={0} x2={courseDistance} shape={<RaceTrackBackground courseid={courseid} regions={skillRegions} />} />}
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#444746" />
                             <XAxis
                                 type="number"
@@ -643,6 +695,7 @@ function SimulatorApp() {
                                 <div className="p-6">
                                     <RaceGraphVisualizer
                                         runData={simulationResult.runData}
+                                        aggregateStats={simulationResult.aggregateStats}
                                         courseDistance={courseDistance}
                                         courseid={courseid}
                                         umas={umasState}
