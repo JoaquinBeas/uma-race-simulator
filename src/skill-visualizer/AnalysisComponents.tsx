@@ -74,10 +74,10 @@ export const CompareComponent: React.FC<{ stats: AggregateStats; samples: number
                 <div className="grid text-[11px] gap-1" style={{ gridTemplateColumns: `auto repeat(${selectedIndices.length}, minmax(0, 1fr))` }}>
                     <div className="text-[#c4c7c5]">Mean</div>
                     {means.map((val, i) => <div key={i} className="text-center font-bold text-[#e3e3e3]">{formatValue(val)}{unit}</div>)}
-                    
+
                     <div className="text-[#c4c7c5]">Median</div>
                     {medians.map((val, i) => <div key={i} className="text-center text-[#c4c7c5]">{formatValue(val)}{unit}</div>)}
-                    
+
                     <div className="text-[#c4c7c5]">Min / Max</div>
                     {mins.map((min, i) => <div key={i} className="text-center text-[#c4c7c5]">{formatValue(min)} / {formatValue(maxs[i])}</div>)}
                 </div>
@@ -92,7 +92,7 @@ export const CompareComponent: React.FC<{ stats: AggregateStats; samples: number
                     <span>Comparison</span>
                     <span className="text-xs font-normal text-[#c4c7c5] italic">Stats across {samples} runs</span>
                 </div>
-                
+
                 {/* Selection Menu */}
                 <div className="flex flex-wrap gap-1.5 mt-1">
                     {Array.from({ length: numTotalUmas }).map((_, i) => {
@@ -116,7 +116,7 @@ export const CompareComponent: React.FC<{ stats: AggregateStats; samples: number
                     )}
                 </div>
             </div>
-            
+
             <div className="p-4 flex-1 overflow-y-auto">
                 {selectedIndices.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-[#c4c7c5] italic text-sm">
@@ -187,7 +187,7 @@ export const SkillTableComponent: React.FC<{ stats: AggregateStats; samples: num
         <div className="bg-[#1e1f20] text-[#e3e3e3] rounded-xl shadow-md border border-[#444746] overflow-hidden flex flex-col h-full">
             <div className="bg-[#282a2c] border-b border-[#444746] px-4 py-2 font-semibold flex justify-between items-center">
                 <span>Skill Analysis</span>
-                <div 
+                <div
                     ref={tabsRef}
                     className="flex bg-[#131314] border border-[#444746] rounded-lg p-0.5 overflow-x-auto max-w-[50%] grab-scroll"
                 >
@@ -195,7 +195,7 @@ export const SkillTableComponent: React.FC<{ stats: AggregateStats; samples: num
                         const colors = ['#8ab4f8', '#f28b82', '#81c995', '#fde293', '#c58af9', '#f48fb1', '#8ab4f8', '#81c995', '#fdad31', '#4fd1c5', '#cddc39', '#5eead4', '#f48fb1', '#f28b82', '#8ab4f8', '#c58af9', '#fde293', '#c4c7c5'];
                         const color = colors[i % colors.length];
                         return (
-                            <button 
+                            <button
                                 key={i}
                                 onClick={() => setActiveUma(i)}
                                 className={`px-3 py-1 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeUma === i ? 'bg-[#282a2c] shadow-sm' : 'text-[#c4c7c5] hover:bg-[#1e1f20]'}`}
@@ -222,7 +222,7 @@ export const SkillTableComponent: React.FC<{ stats: AggregateStats; samples: num
                             <tr key={skill.id} className="border-b border-[#282a2c] hover:bg-[#282a2c] transition-colors">
                                 <td className="px-4 py-2 font-medium text-[#e3e3e3]">{skill.name}</td>
                                 <td className="px-2 py-2 text-center font-bold text-[#81c995]">{formatValue(skill.rate, 1)}%</td>
-                                <td className="px-2 py-2 text-center text-[#c4c7c5]">{formatValue(skill.avgPos, 0)}m</td>
+                                <td className="px-2 py-2 text-center text-[#c4c7c5]">{formatValue(skill.avgPos, 1)}m</td>
                                 <td className="px-4 py-2">
                                     <div className="flex flex-wrap gap-1">
                                         {skill.effects.map((e: any, i: number) => (
@@ -293,8 +293,8 @@ export const StaminaCalculatorComponent: React.FC<{ stats: AggregateStats; umas:
 
                 <div className="pt-4 border-t border-[#444746]">
                     <p className="text-[10px] text-[#c4c7c5] leading-relaxed">
-                        * Final HP is the remaining stamina at the finish line. 
-                        Values below 0 indicate the Umamusume ran out of stamina before finishing, 
+                        * Final HP is the remaining stamina at the finish line.
+                        Values below 0 indicate the Umamusume ran out of stamina before finishing,
                         likely resulting in a significant speed penalty.
                     </p>
                 </div>

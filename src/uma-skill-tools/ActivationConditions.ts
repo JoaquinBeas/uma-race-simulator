@@ -28,7 +28,8 @@ export class CmpOperator extends Operator {
         const arg = this.argument;
         const opName = this.constructor.name.replace('Operator', '').toLowerCase();
 
-        // --- 1. EVALUACIÓN DE CONDICIONES ESTÁTICAS (GREEN SKILLS) ---
+        // --- 1. FILTROS ESTÁTICOS (Green Skills / Passives) ---
+        // Estos se mantienen en 0m porque son pasivos.
         const staticValues: Record<string, number> = {
             'weather': extra.weather,
             'season': extra.season,
@@ -38,6 +39,15 @@ export class CmpOperator extends Operator {
             'track_id': course.raceTrackId,
             'rotation': course.turn,
             'is_basis_distance': (course.distance % 400 === 0) ? 1 : 0,
+            'fan_count': arg,
+            'visiblehorse': arg,
+            'is_abroad': arg,
+            'is_dirtgrade': arg,
+            'activate_count_all_team': arg,
+            'is_exist_chara_id': arg,
+            'is_exist_skill_id': arg,
+            'compete_fight_count': arg,
+            'is_tight_track': arg
         };
 
         if (name in staticValues) {
@@ -55,19 +65,74 @@ export class CmpOperator extends Operator {
             return [regions, (state) => true];
         }
 
-        // --- 2. EVALUACIÓN DE CONDICIONES ESPACIALES ---
+        // --- 2. FILTROS GEOGRÁFICOS Y ALEATORIOS (Corrige el error de 0m) ---
+
+        // Variante: RANDOM EN FASES (phase_random, phase_laterhalf_random, etc.)
+        if (name.includes('phase') && name.includes('random')) {
+            const phase = arg;
+            const pStart = CourseHelpers.phaseStart(course.distance, phase as Phase);
+            const pEnd = CourseHelpers.phaseEnd(course.distance, phase as Phase);
+            let bounds = { start: pStart, end: pEnd };
+
+            if (name.includes('laterhalf')) bounds.start = pStart + (pEnd - pStart) / 2;
+            if (name.includes('firsthalf')) bounds.end = pStart + (pEnd - pStart) / 2;
+
+            return [regions.rmap(r => r.intersect(bounds)), (state) => true];
+        }
+
+        // Variante: RANDOM EN CURVAS (corner_random, all_corner_random)
+        if (name === 'corner_random' || name === 'all_corner_random' || name === 'corner') {
+            let targetRegions: Region[] = [];
+            if (name === 'all_corner_random' || (name === 'corner' && opName === 'neq' && arg === 0)) {
+                targetRegions = course.corners.map(c => new Region(c.start, c.start + c.length));
+            } else if (arg > 0) {
+                const c = course.corners[arg - 1];
+                if (c) targetRegions = [new Region(c.start, c.start + c.length)];
+            }
+
+            return [regions.rmap(r => targetRegions.map(tr => r.intersect(tr))),
+            (state) => name === 'all_corner_random' ? state.currentCornerIdx !== 0 : (state as any).currentCornerIdx === arg];
+        }
+
+        // Variante: RANDOM EN RECTAS (straight_random, last_straight_random)
+        if (name === 'straight_random' || name === 'last_straight_random' || name === 'is_last_straight') {
+            let targetRegions: Region[] = [];
+            if (name === 'last_straight_random' || name === 'is_last_straight') {
+                const ls = course.straights[course.straights.length - 1];
+                if (ls) targetRegions = [new Region(ls.start, ls.end)];
+            } else {
+                targetRegions = course.straights.map(s => new Region(s.start, s.end));
+            }
+
+            return [regions.rmap(r => targetRegions.map(tr => r.intersect(tr))),
+            (state) => (state as any).currentCornerIdx === 0];
+        }
+
+        // Variante: RANDOM EN CUESTAS (up_slope_random, down_slope_random)
+        if (name === 'up_slope_random' || name === 'down_slope_random') {
+            const isUp = name.startsWith('up');
+            const slopes = course.slopes.filter(s => isUp ? s.slope > 0 : s.slope < 0);
+            const targetRegions = slopes.map(s => new Region(s.start, s.start + s.length));
+
+            return [regions.rmap(r => targetRegions.map(tr => r.intersect(tr))), (state) => true];
+        }
+
+        // Variante: RANDOM DESPUÉS DE X% (distance_rate_after_random)
+        if (name === 'distance_rate_after_random') {
+            const pos = (arg / 100) * course.distance;
+            return [regions.rmap(r => r.intersect({ start: pos, end: course.distance })), (state) => true];
+        }
+
+        // --- 3. FILTROS ESPACIALES ESTÁNDAR ---
         if (name === 'phase') {
             const phaseStart = CourseHelpers.phaseStart(course.distance, arg as Phase);
             const phaseEnd = CourseHelpers.phaseEnd(course.distance, arg as Phase);
-            const phaseRegion = new Region(phaseStart, phaseEnd);
-
-            // Si la condición es igualdad, filtramos por esa fase. Si es gt/lt, ajustamos.
             return [regions.rmap(r => {
-                if (opName === 'eq') return r.intersect(phaseRegion);
+                if (opName === 'eq') return r.intersect({ start: phaseStart, end: phaseEnd });
                 if (opName === 'gt' || opName === 'gte') return r.intersect({ start: phaseStart, end: course.distance });
                 if (opName === 'lt' || opName === 'lte') return r.intersect({ start: 0, end: phaseEnd });
                 return r;
-            }), (state) => true];
+            }), (state) => state.phase === arg];
         }
 
         if (name === 'distance_rate') {
@@ -82,18 +147,16 @@ export class CmpOperator extends Operator {
         if (name === 'remain_distance') {
             const pos = course.distance - arg;
             return [regions.rmap(r => {
-                // remain_distance <= 200 significa estar entre distance-200 y el final
                 if (opName === 'lt' || opName === 'lte') return r.intersect({ start: pos, end: course.distance });
                 if (opName === 'gt' || opName === 'gte') return r.intersect({ start: 0, end: pos });
                 return r;
             }), (state) => true];
         }
 
-        // --- 3. EVALUACIÓN DE CONDICIONES DINÁMICAS (PREDICATE) ---
+        // --- 4. PREDICADO DINÁMICO (Evaluación por frame) ---
         const predicate: DynamicCondition = (state: RaceState) => {
             let val: any;
             switch (name) {
-                // --- DINÁMICAS BÁSICAS ---
                 case 'order': val = state.order; break;
                 case 'order_rate': val = (state.order / state.numUmas) * 100; break;
                 case 'hp_per': val = state.hp.hpRatioRemaining() * 100; break;
@@ -101,21 +164,13 @@ export class CmpOperator extends Operator {
                 case 'temptation_count': val = state.temptationCount; break;
                 case 'is_temptation': val = state.isKakari ? 1 : 0; break;
                 case 'is_lastspurt': val = state.isLastSpurt ? 1 : 0; break;
-
-                // --- GEOMETRÍA Y POSICIÓN ---
-                case 'corner': val = (state as any).currentCornerIdx; break;
-                case 'corner_count': val = (state as any).cornerCount; break;
                 case 'furlong': val = (state as any).furlong; break;
-                case 'is_finalcorner': val = state.isFinalCorner ? 1 : 0; break;
-                case 'is_last_straight': val = (state as any).isLastStraight ? 1 : 0; break;
-                case 'straight_front_type': val = (state as any).currentStraightIdx; break; // Simplificado
-
-                // --- TIMERS (CONTINUETIME) ---
+                case 'bashin_diff_infront': val = state.bashinDiffInfront; break;
+                case 'bashin_diff_behind': val = state.bashinDiffBehind; break;
+                case 'change_order_onetime': val = state.changeOrderLastFrame; break;
                 case 'blocked_front_continuetime': val = (state as any).blockedFrontTime; break;
                 case 'infront_near_lane_time': val = (state as any).nearLaneTimeInfront; break;
                 case 'behind_near_lane_time': val = (state as any).nearLaneTimeBehind; break;
-
-                // --- MEMORIA (CONTINUE FLAGS) ---
                 case 'order_rate_in20_continue': val = (state as any).orderRateIn20Continue ? 1 : 0; break;
                 case 'order_rate_in40_continue': val = (state as any).orderRateIn40Continue ? 1 : 0; break;
                 case 'order_rate_in50_continue': val = (state as any).orderRateIn50Continue ? 1 : 0; break;
@@ -124,45 +179,17 @@ export class CmpOperator extends Operator {
                 case 'order_rate_out40_continue': val = (state as any).orderRateOut40Continue ? 1 : 0; break;
                 case 'order_rate_out50_continue': val = (state as any).orderRateOut50Continue ? 1 : 0; break;
                 case 'order_rate_out70_continue': val = (state as any).orderRateOut70Continue ? 1 : 0; break;
-
-                // --- STATS BASE ---
                 case 'base_speed': val = state.horse.speed; break;
                 case 'base_stamina': val = state.horse.stamina; break;
                 case 'base_power': val = state.horse.power; break;
                 case 'base_guts': val = state.horse.guts; break;
                 case 'base_wiz': val = state.horse.wisdom; break;
-
-                // --- COUNTERS DE ACTIVACIÓN ---
-                case 'activate_count_start': val = state.activateCount[0]; break;
-                case 'activate_count_middle': val = state.activateCount[1]; break;
-                case 'activate_count_end_after': val = state.activateCount[2] + state.activateCount[3]; break;
-                case 'activate_count_heal': val = state.activateCountHeal; break;
-
-                // --- ADELANTAMIENTOS ---
                 case 'change_order_up_middle': val = (state as any).overtakesInPhase[1]; break;
                 case 'change_order_up_finalcorner_after': val = (state as any).overtakesInFinalCorner; break;
-
-                // --- IGNORADOS (SIEMPRE TRUE) ---
-                case 'fan_count':
-                case 'visiblehorse':
-                case 'is_abroad':
-                case 'is_dirtgrade':
-                case 'activate_count_all_team':
-                case 'is_exist_chara_id':
-                case 'is_exist_skill_id':
-                case 'compete_fight_count':
-                case 'near_count':
-                case 'near_infront_count':
-                case 'is_surrounded':
-                case 'is_tight_track':
-                    val = arg; // Forzamos que la comparación (val === arg) sea true
-                    break;
-
-                default:
-                    return true;
+                case 'activate_count_heal': val = state.activateCountHeal; break;
+                default: return true;
             }
 
-            // Lógica de comparación estándar (se mantiene igual)
             switch (opName) {
                 case 'eq': return val === arg;
                 case 'neq': return val !== arg;
