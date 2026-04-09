@@ -132,6 +132,7 @@ export interface RaceState {
 	readonly overtakesInPhase: number[];
 	readonly overtakesInFinalCorner: number;
 	readonly blockedFrontTime: number;
+	readonly isBehindIn: boolean;
 	readonly nearLaneTimeInfront: number;
 	readonly nearLaneTimeBehind: number;
 	readonly orderRateIn20Continue: boolean;
@@ -279,6 +280,7 @@ export class RaceSolver implements RaceState {
 	overtakesInFinalCorner: number = 0;
 	
 	blockedFrontTime: number = 0;
+	isBehindIn: boolean = false;
 	nearLaneTimeInfront: number = 0;
 	nearLaneTimeBehind: number = 0;
 
@@ -513,14 +515,17 @@ export class RaceSolver implements RaceState {
 			this.bashinDiffBehind = Math.max(0, -relativePos);
 
 			// Timers de Proximidad
-			if (relativePos > 0 && relativePos < 2) this.blockedFrontTime += dt;
-			else this.blockedFrontTime = 0;
+			if (relativePos > 0 && relativePos < 2) {
+				this.blockedFrontTime += dt;
+				this.isBehindIn = true;
+			} else {
+				this.blockedFrontTime = 0;
+				this.isBehindIn = false;
+			}
 
 			if (relativePos > 0 && relativePos < 2.5) this.nearLaneTimeInfront += dt;
-			else this.nearLaneTimeInfront = 0;
 
 			if (relativePos < 0 && relativePos > -2.5) this.nearLaneTimeBehind += dt;
-			else this.nearLaneTimeBehind = 0;
 
 			// Adelantamientos
 			const isAheadNow = relativePos < 0;
@@ -714,10 +719,14 @@ export class RaceSolver implements RaceState {
 			if (this.pos >= s.trigger.end || this.pendingRemoval.has(s.skillId)) {
 				this.pendingSkills.splice(i, 1);
 				this.pendingRemoval.delete(s.skillId);
-			} else if (this.pos >= s.trigger.start && (s.extraCondition(this) || (this.forceInnateSkillActivation && s.rarity >= SkillRarity.Unique))) {
-				this.activateSkill(s);
-				this.pendingSkills.splice(i, 1);
-				if (s.skillId !== 'asitame' && s.skillId !== 'staminasyoubu') ++activatedThisFrame;
+			} else if (this.pos >= s.trigger.start) {
+				const cond = s.extraCondition(this);
+				const force = this.forceInnateSkillActivation && s.rarity >= SkillRarity.Unique;
+				if (cond || force) {
+					this.activateSkill(s);
+					this.pendingSkills.splice(i, 1);
+					if (s.skillId !== 'asitame' && s.skillId !== 'staminasyoubu') ++activatedThisFrame;
+				}
 			}
 		}
 		this.activateCountLastFrame = activatedThisFrame;

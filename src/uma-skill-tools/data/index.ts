@@ -6,6 +6,7 @@ import umas from './umas.json';
 import cards from './cards.json';
 import icons from './icons.json';
 import skillMeta from './skill_meta.json';
+import defaultRace from './default_race.json';
 
 export {
   courseData,
@@ -15,5 +16,6 @@ export {
   umas,
   cards,
   icons,
-  skillMeta
+  skillMeta,
+  defaultRace
 };

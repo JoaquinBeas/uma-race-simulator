@@ -11,6 +11,7 @@ import { useGrabScroll } from '../lib/useGrabScroll';
 import umas from '../uma-skill-tools/data/umas.json';
 import skillmeta from '../uma-skill-tools/data/skill_meta.json';
 import skillnames from '../uma-skill-tools/data/skillnames.json';
+import { defaultRace } from '../uma-skill-tools/data';
 
 import './app.css';
 
@@ -313,10 +314,10 @@ function SimulatorApp() {
     const umaTabsRef = useGrabScroll();
     const resultsRef = useGrabScroll();
 
-    const [courseid, setCourseid] = useState(10101);
-    const [weather, setWeather] = useState(1);
-    const [ground, setGround] = useState(1);
-    const [season, setSeason] = useState(1);
+    const [courseid, setCourseid] = useState(defaultRace.courseId);
+    const [weather, setWeather] = useState(defaultRace.weather);
+    const [ground, setGround] = useState(defaultRace.ground_condition);
+    const [season, setSeason] = useState(defaultRace.season);
 
     const [samples, setSamples] = useState(500);
     const [seed, setSeed] = useState(Math.floor(Math.random() * 0xFFFFFFFF).toString());

@@ -8,6 +8,7 @@ import { TRACKNAMES_en } from '../strings/common';
 
 import courses from '../uma-skill-tools/data/course_data.json';
 import tracknames from '../uma-skill-tools/data/tracknames.json';
+import { defaultRace } from '../uma-skill-tools/data';
 
 import './RaceTrack.css';
 
@@ -61,7 +62,7 @@ const coursesByTrack = (function () {
 })();
 
 export function TrackSelect(props: any) {
-    const currentCourse = (courses as any)[props.courseid] || (courses as any)[10101];
+    const currentCourse = (courses as any)[props.courseid] || (courses as any)[defaultRace.courseId];
     let [trackid, setTrackid] = useState(currentCourse.raceTrackId);
     const changeCourse = useCallback((e: any) => props.setCourseid(+e.target.value), [props.setCourseid]);
 

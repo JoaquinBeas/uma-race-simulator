@@ -55,7 +55,7 @@ export namespace CourseHelpers {
 
 	export function phaseStart(distance: number, phase: Phase) {
 		switch (phase) {
-		case 0: return 0;
+		case 0: return 1;
 		case 1: return distance * 1/6;
 		case 2: return distance * 2/3;
 		case 3: return distance * 5/6;
@@ -84,7 +84,6 @@ export namespace CourseHelpers {
 	export function getCourse(courseId: number | string): CourseData {
 		let course = (courses as any)[courseId];
 		if (!course) {
-			console.warn(`Course with ID ${courseId} not found. Returning default course.`);
 			course = (courses as any)[10101];
 		}
 		if (!isSortedByStart(course.slopes)) course.slopes.sort((a,b) => a.start - b.start);

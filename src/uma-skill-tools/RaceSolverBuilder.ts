@@ -510,14 +510,14 @@ export class RaceSolverBuilder {
 				perspective: Perspective.Self,
 				rarity: SkillRarity.White,
 				trigger: new Region(0, 100),
-				extraCondition: (_) => true,
+				extraCondition: (s: RaceState) => s.activateCount[0] >= 3 && s.pos > 0,
 				effects: [{ type: SkillType.Accel, baseDuration: 3.0, modifier: 0.2 }]
 			}, {
 				skillId: '200532',
 				perspective: Perspective.Self,
 				rarity: SkillRarity.White,
-				trigger: new Region(0, 100),
-				extraCondition: (_) => true,
+				trigger: new Region(1, 100),
+				extraCondition: (s: RaceState) => s.horse.strategy == Strategy.Nige && s.phase == 0 && s.pos > 0,
 				effects: [{ type: SkillType.Accel, baseDuration: 1.2, modifier: 0.2 }]
 			}];
 		}
@@ -732,7 +732,8 @@ export class RaceSolverBuilder {
 				skills: this._pacerSkills,
 				rng: pacerRng,
 				forceFullSpurt: this._forceFullSpurt,
-				forceInnateSkillActivation: this._forceInnateSkillActivation
+				forceInnateSkillActivation: this._forceInnateSkillActivation,
+				isPacer: true
 			}) : null;
 
 			const redo: boolean = yield new RaceSolver({
@@ -747,7 +748,8 @@ export class RaceSolverBuilder {
 				order,
 				numUmas,
 				onSkillActivate: this._onSkillActivate,
-				onSkillDeactivate: this._onSkillDeactivate
+				onSkillDeactivate: this._onSkillDeactivate,
+				isPacer: false
 			});
 
 			if (redo) {

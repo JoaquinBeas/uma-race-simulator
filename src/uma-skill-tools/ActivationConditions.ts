@@ -182,6 +182,7 @@ export class CmpOperator extends Operator {
             return [regions.rmap(r => {
                 if (opName === 'lt' || opName === 'lte') return r.intersect({ start: pos, end: course.distance });
                 if (opName === 'gt' || opName === 'gte') return r.intersect({ start: 0, end: pos });
+                if (opName === 'eq') return r.intersect({ start: pos, end: pos });
                 return r;
             }), (state) => true];
         }
@@ -204,7 +205,9 @@ export class CmpOperator extends Operator {
                 case 'temptation_count': val = state.temptationCount; break;
                 case 'is_temptation': val = state.isKakari ? 1 : 0; break;
                 case 'is_lastspurt': val = state.isLastSpurt ? 1 : 0; break;
-                case 'is_finalcorner': val = state.isFinalCorner ? 1 : 0; break;
+                case 'is_finalcorner': 
+                    val = state.isFinalCorner ? 1 : 0; 
+                    break;
                 case 'is_finalcorner_laterhalf': val = state.isFinalCornerLaterHalf ? 1 : 0; break;
                 case 'is_last_straight': val = state.isLastStraight ? 1 : 0; break;
                 case 'furlong': val = (state as any).furlong; break;
@@ -228,11 +231,24 @@ export class CmpOperator extends Operator {
                 case 'base_guts': val = state.horse.guts; break;
                 case 'base_wiz': val = state.horse.wisdom; break;
                 case 'change_order_up_middle': val = (state as any).overtakesInPhase[1]; break;
+                case 'change_order_up_end_after': val = (state as any).overtakesInPhase[2]; break;
                 case 'change_order_up_finalcorner_after': val = (state as any).overtakesInFinalCorner; break;
                 case 'activate_count_heal': val = state.activateCountHeal; break;
-                default: return true;
+                case 'blocked_side_continuetime': val = (state as any).blockedFrontTime; break;
+                case 'is_behind_in': val = (state as any).isBehindIn ? 1 : 0; break;
+                case 'activate_count_start': val = state.activateCount[0]; break;
+                case 'activate_count_middle': val = state.activateCount[1]; break;
+                case 'activate_count_end_after': val = state.activateCount[2]; break;
+                case 'is_move_lane': val = state.changeOrderLastFrame !== 0 ? 1 : 0; break;
+                case 'is_overtake': val = state.isOvertake ? 1 : 0; break;
+                case 'distance_type': val = state.course.distanceType; break;
+                case 'is_finalcorner_random': val = state.isFinalCorner ? 1 : 0; break;
+                case 'is_last_straight_onetime': val = state.isLastStraight ? 1 : 0; break;
+                default: 
+                    val = 0; 
+                    break;
             }
-
+            
             switch (opName) {
                 case 'eq': return val === arg;
                 case 'neq': return val !== arg;
@@ -240,7 +256,7 @@ export class CmpOperator extends Operator {
                 case 'lte': return val <= arg;
                 case 'gt': return val > arg;
                 case 'gte': return val >= arg;
-                default: return true;
+                default: return false;
             }
         };
 
