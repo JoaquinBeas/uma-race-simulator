@@ -294,7 +294,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                         const name = skillNames[String(id) as keyof typeof skillNames]?.[0] || id;
                         const isSelected = selected ? Array.from(selected.values()).includes(id) : false;
                         const iconId = (skillMeta as any)[String(id)]?.iconId;
-                        const iconSrc = iconId ? `/icons/skill/utx_ico_skill_${iconId}.png` : null;
+                        const iconSrc = iconId ? `${import.meta.env.BASE_URL}icons/skill/utx_ico_skill_${iconId}.png` : null;
                         const type = getSkillType(id.toString());
 
                         return (
