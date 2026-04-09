@@ -53,7 +53,7 @@ const EFFECT_TYPE_MAP: Record<number, string> = {
 export const Skill: React.FC<any> = (props) => {
     const name = skillNames[String(props.id) as keyof typeof skillNames]?.[0] || props.id;
     const iconId = (skillMeta as any)[String(props.id)]?.iconId;
-    const iconSrc = iconId ? `/icons/skill/utx_ico_skill_${iconId}.png` : null;
+    const iconSrc = iconId ? `${import.meta.env.BASE_URL}icons/skill/utx_ico_skill_${iconId}.png` : null;
     const skillData = (skillsData as any)[String(props.id)];
 
     let lvDisplay = null;
@@ -62,12 +62,12 @@ export const Skill: React.FC<any> = (props) => {
             lvDisplay = (
                 <div className="flex items-center text-[10px] font-bold bg-[#282a2c] text-[#8ab4f8] px-2 py-0.5 rounded-full border border-[#444746] flex-shrink-0" onClick={e => e.stopPropagation()}>
                     <span className="mr-1 uppercase tracking-tighter">Lv</span>
-                    <select 
-                        value={props.lv.val} 
+                    <select
+                        value={props.lv.val}
                         onChange={(e) => props.lv.setVal(parseInt(e.target.value, 10))}
                         className="bg-transparent font-bold outline-none cursor-pointer appearance-none text-[#8ab4f8]"
                     >
-                        {Array.from({length: props.lv.max - props.lv.min + 1}, (_, i) => props.lv.min + i).map(n => (
+                        {Array.from({ length: props.lv.max - props.lv.min + 1 }, (_, i) => props.lv.min + i).map(n => (
                             <option key={n} value={n} className="bg-[#1e1f20]">{n}</option>
                         ))}
                     </select>
@@ -80,9 +80,9 @@ export const Skill: React.FC<any> = (props) => {
     }
 
     return (
-        <div 
-            className={`group flex flex-col p-2 border rounded-xl bg-[#131314] shadow-sm transition-all duration-200 overflow-hidden cursor-pointer ${props.isExpanded ? 'border-[#8ab4f8] ring-1 ring-[#8ab4f8]' : 'border-[#444746] hover:border-[#c4c7c5]'}`} 
-            data-skillid={props.id} 
+        <div
+            className={`group flex flex-col p-2 border rounded-xl bg-[#131314] shadow-sm transition-all duration-200 overflow-hidden cursor-pointer ${props.isExpanded ? 'border-[#8ab4f8] ring-1 ring-[#8ab4f8]' : 'border-[#444746] hover:border-[#c4c7c5]'}`}
+            data-skillid={props.id}
             onClick={props.onClick}
         >
             <div className="flex items-center gap-3">
@@ -97,7 +97,7 @@ export const Skill: React.FC<any> = (props) => {
                 <div className="flex items-center gap-2">
                     {lvDisplay}
                     {props.dismissable && (
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 props.onDismiss?.();
@@ -109,10 +109,10 @@ export const Skill: React.FC<any> = (props) => {
                     )}
                 </div>
             </div>
-            
+
             {/* Expanded Skill Data Section */}
             {props.isExpanded && skillData && skillData.alternatives && (
-                <div 
+                <div
                     className="mt-3 pt-3 border-t border-[#444746] flex flex-col gap-3 text-xs text-[#c4c7c5] cursor-text"
                     onClick={e => e.stopPropagation()} /* Prevents collapse when trying to highlight/copy text */
                 >
@@ -120,13 +120,13 @@ export const Skill: React.FC<any> = (props) => {
                         <div key={idx} className="flex flex-col gap-1.5 bg-[#1e1f20] p-2 rounded-lg border border-[#444746]">
                             {alt.precondition && (
                                 <div className="break-words leading-relaxed">
-                                    <span className="text-[#8ab4f8] font-bold mr-1">Pre:</span> 
+                                    <span className="text-[#8ab4f8] font-bold mr-1">Pre:</span>
                                     {alt.precondition}
                                 </div>
                             )}
                             {alt.condition && (
                                 <div className="break-words leading-relaxed">
-                                    <span className="text-[#8ab4f8] font-bold mr-1">Cond:</span> 
+                                    <span className="text-[#8ab4f8] font-bold mr-1">Cond:</span>
                                     {alt.condition}
                                 </div>
                             )}
@@ -159,13 +159,13 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
             lvDisplay = (
                 <div className="flex items-center text-xs bg-[#282a2c] text-[#8ab4f8] px-1 rounded inline-flex whitespace-nowrap" onClick={e => e.stopPropagation()}>
                     <span className="mr-1">Lv</span>
-                    <select 
-                        value={props.lv.val} 
+                    <select
+                        value={props.lv.val}
                         onChange={(e) => props.lv.setVal(parseInt(e.target.value, 10))}
                         className="bg-transparent font-bold outline-none cursor-pointer"
                         style={{ paddingRight: '2px' }}
                     >
-                        {Array.from({length: props.lv.max - props.lv.min + 1}, (_, i) => props.lv.min + i).map(n => (
+                        {Array.from({ length: props.lv.max - props.lv.min + 1 }, (_, i) => props.lv.min + i).map(n => (
                             <option key={n} value={n} className="bg-[#1e1f20]">{n}</option>
                         ))}
                     </select>
@@ -192,7 +192,7 @@ export const ExpandedSkillDetails: React.FC<any> = (props) => {
                 </div>
             </div>
             {props.dismissable && (
-                <button 
+                <button
                     onClick={props.onDismiss}
                     className="skillDismiss flex-shrink-0 text-[#f28b82] hover:text-[#e06c64] hover:bg-[#282a2c] p-1 rounded ml-2"
                 >
@@ -222,12 +222,12 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
         return (ids || []).filter(id => {
             const name = skillNames[String(id) as keyof typeof skillNames]?.[0] || id.toString();
             const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
-            
+
             if (!matchesSearch) return false;
-            
+
             if (filterType === 'all') return true;
             if (filterType === 'selected') return selected ? Array.from(selected.values()).includes(id) : false;
-            
+
             return getSkillType(id.toString()) === filterType;
         });
     }, [ids, search, filterType, selected]);
@@ -254,16 +254,16 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                         <h2 className="text-xl font-bold text-[#e3e3e3]">Select Skills</h2>
                     </div>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                     <div className="relative flex-1 min-w-[200px]">
                         <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-[#c4c7c5]">
                             <Search className="h-5 w-5" />
                         </span>
-                        <input 
-                            type="text" 
-                            placeholder="Search skills by name..." 
-                            value={search} 
+                        <input
+                            type="text"
+                            placeholder="Search skills by name..."
+                            value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-10 pr-4 py-2 w-full bg-[#131314] text-[#e3e3e3] border border-[#444746] rounded-xl focus:ring-2 focus:ring-[#8ab4f8] focus:border-transparent outline-none transition-all placeholder-[#c4c7c5]"
                         />
@@ -284,7 +284,7 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
             </div>
 
             {/* SCROLLABLE LIST - flex-1 allows it to take all remaining space */}
-            <div 
+            <div
                 ref={listRef}
                 className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 grab-scroll bg-[#131314]"
                 style={{ alignContent: 'start' }}
@@ -298,8 +298,8 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                         const type = getSkillType(id.toString());
 
                         return (
-                            <div 
-                                key={id} 
+                            <div
+                                key={id}
                                 className={`group relative p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-all duration-200 h-[68px] ${isSelected ? 'bg-[#8ab4f8]/10 border-[#8ab4f8] shadow-md ring-1 ring-[#8ab4f8]' : 'bg-[#1e1f20] border-[#444746] hover:border-[#c4c7c5] hover:bg-[#282a2c]'}`}
                                 onClick={() => {
                                     const newIds = selected ? Array.from(selected.values() as Iterable<string>) : [];
@@ -337,14 +337,14 @@ export const SkillList: React.FC<SkillListProps> = ({ ids, selected, setSelected
                     </div>
                 )}
             </div>
-            
+
             {/* FOOTER - shrink-0 ensures it's always visible and pinned to bottom */}
             <div className="p-4 border-t border-[#444746] bg-[#1e1f20] flex justify-between items-center shrink-0">
                 <div className="text-sm text-[#c4c7c5]">
                     <span className="font-bold text-[#8ab4f8]">{selected ? selected.size : 0}</span> skills selected
                 </div>
-                <button 
-                    onClick={onClose} 
+                <button
+                    onClick={onClose}
                     className="bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#131314] px-6 py-2 rounded-xl font-bold transition-colors"
                 >
                     Done

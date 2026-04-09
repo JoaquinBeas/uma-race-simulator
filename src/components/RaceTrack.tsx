@@ -178,7 +178,7 @@ export function RaceTrack(props: any) {
         const joiner = ', ';
         const statThresholds = course.courseSetStatus.length == 0 ? noneStat : course.courseSetStatus.map(s => statStrings[s]).join(joiner);
         const title = STRINGS.racetrack.thresholds;
-        const thresholdIcons = course.courseSetStatus.slice().reverse().map((s, i) => <img key={`threshold-${i}`} src={`/icons/utx_ico_obtain_${(s + 99).toString().slice(1)}.png`} />);
+        const thresholdIcons = course.courseSetStatus.slice().reverse().map((s, i) => <img key={`threshold-${i}`} src={`${import.meta.env.BASE_URL}icons/utx_ico_obtain_${(s + 99).toString().slice(1)}.png`} />);
         const inout = (STRINGS.racetrack as any)[inoutKey[course.course]];
         const surface = course.surface == Surface.Turf ? STRINGS.racetrack.turf : STRINGS.racetrack.dirt;
         const desc = course.surface == 1 ? STRINGS.coursedesc.one : STRINGS.coursedesc.many;

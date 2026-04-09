@@ -51,7 +51,7 @@ function Star({ starCount, minStarCount, n }: any) {
 }
 
 export function UmaSelector(props: any) {
-	const randomMob = useMemo(() => `/icons/mob/trained_mob_chr_icon_${8000 + Math.floor(Math.random() * 624)}_000001_01.png`, []);
+	const randomMob = useMemo(() => `${import.meta.env.BASE_URL}icons/mob/trained_mob_chr_icon_${8000 + Math.floor(Math.random() * 624)}_000001_01.png`, []);
 	const [value, setOutfitId] = useLens(props.outfitId);
 	const valueRef = useRef(value);
 	useEffect(() => {
@@ -87,12 +87,12 @@ export function UmaSelector(props: any) {
 			<div className="relative flex flex-col items-center">
 				<div className="relative">
 					<img
-						src={value ? `/icons/chara/${(icons as any)[value][1]}.png` : randomMob}
+						src={value ? `${import.meta.env.BASE_URL}icons/chara/${(icons as any)[value][1]}.png` : randomMob}
 						className="w-32 h-32 cursor-pointer object-contain"
 						onClick={() => input.current?.focus()}
 					/>
 					<img
-						src="/icons/utx_ico_umamusume_00.png"
+						src={`${import.meta.env.BASE_URL}icons/utx_ico_umamusume_00.png`}
 						className="absolute -top-2 -right-2 w-10 h-10 cursor-pointer z-10"
 						onClick={() => input.current?.focus()}
 					/>
@@ -137,7 +137,7 @@ export function UmaSelector(props: any) {
 					>
 						{query.suggestions.slice(0, 50).map((oid) => (
 							<li key={oid} className="flex items-center gap-3 p-2 hover:bg-[#8ab4f8] hover:text-[#131314] cursor-pointer transition-colors" onMouseDown={(e) => { e.preventDefault(); confirm(oid); }}>
-								<img src={`/icons/chara/${(icons as any)[oid][1]}.png`} className="w-10 h-10 rounded-full object-cover" loading="lazy" />
+								<img src={`${import.meta.env.BASE_URL}icons/chara/${(icons as any)[oid][1]}.png`} className="w-10 h-10 rounded-full object-cover" loading="lazy" />
 								<span className="font-bold">{(umas as any)[oid.slice(0, 4)].outfits[oid].epithet} {(umas as any)[oid.slice(0, 4)].name[1]}</span>
 							</li>
 						))}
@@ -153,7 +153,7 @@ export function Stat({ value: lens, tabindex }: any) {
 	const rank = value > 1200 ? Math.min(18 + Math.floor((value - 1200) / 100) * 10 + Math.floor(value / 10) % 10, 97) : (value >= 1150 ? 17 : (value >= 1100 ? 16 : (value >= 400 ? 8 + Math.floor((value - 400) / 100) : Math.floor(value / 50))));
 	return (
 		<div className="flex items-center justify-center p-2 gap-2 bg-[#131314]">
-			<img src={`/icons/statusrank/ui_statusrank_${(100 + rank).toString().slice(1)}.png`} className="h-8 w-8 object-contain" />
+			<img src={`${import.meta.env.BASE_URL}icons/statusrank/ui_statusrank_${(100 + rank).toString().slice(1)}.png`} className="h-8 w-8 object-contain" />
 			<input
 				type="number"
 				min="1"
@@ -178,7 +178,7 @@ export function AptitudeSelect({ a: lens, tabindex }: any) {
 				className="cursor-pointer hover:scale-110 transition-transform"
 				onClick={() => setOpen(!open)}
 			>
-				<img src={`/icons/utx_ico_statusrank_${idx.toString().slice(1)}.png`} className="h-7 w-7 object-contain" />
+				<img src={`${import.meta.env.BASE_URL}icons/utx_ico_statusrank_${idx.toString().slice(1)}.png`} className="h-7 w-7 object-contain" />
 			</div>
 			{open && (
 				<ul className="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-[#1e1f20] border border-[#444746] rounded-md shadow-xl z-[110] min-w-[44px] p-1">
@@ -188,7 +188,7 @@ export function AptitudeSelect({ a: lens, tabindex }: any) {
 							onClick={() => { setA(apt); setOpen(false); }}
 							className="p-1.5 hover:bg-[#282a2c] rounded transition-colors cursor-pointer flex justify-center"
 						>
-							<img src={`/icons/utx_ico_statusrank_${(100 + (7 - APTITUDES.indexOf(apt))).toString().slice(1)}.png`} className="h-7 w-7" />
+							<img src={`${import.meta.env.BASE_URL}icons/utx_ico_statusrank_${(100 + (7 - APTITUDES.indexOf(apt))).toString().slice(1)}.png`} className="h-7 w-7" />
 						</li>
 					))}
 				</ul>
@@ -280,7 +280,7 @@ export function HorseDef(props: any) {
 					{[1, 2, 3, 4, 5].map(i => (
 						<div key={i} className="flex flex-col border-r last:border-r-0 transition-colors" style={{ borderColor: accentColor }}>
 							<div className="bg-[#282a2c] flex items-center justify-center py-1 gap-1 border-b transition-colors" style={{ borderColor: accentColor, color: accentColor }}>
-								<img src={`/icons/status_0${i - 1}.png`} className="h-4 w-4 brightness-0 invert opacity-80" />
+								<img src={`${import.meta.env.BASE_URL}icons/status_0${i - 1}.png`} className="h-4 w-4 brightness-0 invert opacity-80" />
 								<span className="text-[10px] sm:text-xs font-bold uppercase tracking-tight">{(STRINGS.common.stat as any)[i]}</span>
 							</div>
 							{i === 1 && <Stat value={props.state.speed} />}
@@ -297,7 +297,7 @@ export function HorseDef(props: any) {
 					<div className="flex items-center justify-center gap-3 bg-[#131314] h-11 rounded-full border border-[#444746] shadow-sm">
 						<span className="text-[10px] font-bold text-[#c4c7c5] uppercase tracking-wider">Motivation</span>
 						<img
-							src={`/icons/global/utx_ico_motivation_m_0${mood + 2}.png`}
+							src={`${import.meta.env.BASE_URL}icons/global/utx_ico_motivation_m_0${mood + 2}.png`}
 							className="h-7 cursor-pointer hover:scale-110 transition-transform"
 							onClick={() => setMood(mood === 2 ? -2 : mood + 1)}
 						/>
