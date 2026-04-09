@@ -43165,6 +43165,9 @@ class CmpOperator extends Operator {
         case "activate_count_heal":
           val = state.activateCountHeal;
           break;
+        case "activate_count_all":
+          val = state.activateCount[0] + state.activateCount[1] + state.activateCount[2];
+          break;
         case "blocked_side_continuetime":
           val = state.blockedFrontTime;
           break;
