@@ -234,6 +234,7 @@ export class CmpOperator extends Operator {
                 case 'change_order_up_end_after': val = (state as any).overtakesInPhase[2]; break;
                 case 'change_order_up_finalcorner_after': val = (state as any).overtakesInFinalCorner; break;
                 case 'activate_count_heal': val = state.activateCountHeal; break;
+                case 'activate_count_all': val = state.activateCount[0] + state.activateCount[1] + state.activateCount[2]; break;
                 case 'blocked_side_continuetime': val = (state as any).blockedFrontTime; break;
                 case 'is_behind_in': val = (state as any).isBehindIn ? 1 : 0; break;
                 case 'activate_count_start': val = state.activateCount[0]; break;
